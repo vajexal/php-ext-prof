@@ -28,7 +28,9 @@ ZEND_BEGIN_MODULE_GLOBALS(prof)
     zend_stack func_start_times;
     HashTable func_timings;
 
-    zend_ulong opcode_start_time;
+    zend_string *opcode_last_file;
+    uint32_t opcode_last_lineno;
+    zend_ulong opcode_last_time;
     HashTable opcode_timings;
 ZEND_END_MODULE_GLOBALS(prof)
 

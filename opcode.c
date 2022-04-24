@@ -66,45 +66,39 @@ static int prof_opcode_handler(zend_execute_data *execute_data) {
 }
 
 static void prof_opcode_handler_count_timings(zend_execute_data *execute_data) {
-    zval *file_timings = zend_hash_lookup(&PROF_G(opcode_timings), execute_data->func->op_array.filename);
+    zend_string *filename = execute_data->func->op_array.filename;
+    uint32_t lineno = execute_data->opline->lineno;
 
-    if (ZVAL_IS_NULL(file_timings)) {
-        array_init(file_timings);
-
-        // fill first opcode of the file
-        zend_ulong opcode_start_time = get_time();
-        if (!opcode_start_time) {
+    if (PROF_G(opcode_last_file) == NULL && PROF_G(opcode_last_lineno) == 0) {
+        PROF_G(opcode_last_file) = filename;
+        PROF_G(opcode_last_lineno) = lineno;
+        PROF_G(opcode_last_time) = get_time();
+        if (!PROF_G(opcode_last_time)) {
             PROF_G(error) = true;
-            return;
         }
-        PROF_G(opcode_start_time) = opcode_start_time;
-
-        zval opline_time;
-        ZVAL_DOUBLE(&opline_time, PROF_OPCODE_EMPTY_TIMING);
-        zend_hash_index_update(Z_ARR_P(file_timings), execute_data->opline->lineno, &opline_time);
-
         return;
     }
 
-    zval *timing = zend_hash_index_lookup(Z_ARR_P(file_timings), execute_data->opline->lineno);
-    if (ZVAL_IS_NULL(timing)) {
-        // if we moved to the next line, then count timing for prev line
-        zend_ulong end_time = get_time();
-        if (!end_time) {
-            PROF_G(error) = true;
-            return;
-        }
-
-        zval opline_time;
-        ZVAL_DOUBLE(&opline_time, (double)(end_time - PROF_G(opcode_start_time)) / 1000000);
-        zend_hash_index_update(Z_ARR_P(file_timings), execute_data->opline->lineno - 1, &opline_time);
-
-        zval opline_time2;
-        ZVAL_DOUBLE(&opline_time2, PROF_OPCODE_EMPTY_TIMING);
-        zend_hash_index_update(Z_ARR_P(file_timings), execute_data->opline->lineno, &opline_time2);
-
-        // todo packed array stat
-
-        PROF_G(opcode_start_time) = end_time;
+    zval *file_timings = zend_hash_lookup(&PROF_G(opcode_timings), filename);
+    if (ZVAL_IS_NULL(file_timings)) {
+        array_init(file_timings);
     }
+
+    if (filename == PROF_G(opcode_last_file) && lineno == PROF_G(opcode_last_lineno)) {
+        return;
+    }
+
+    zend_ulong end_time = get_time();
+    if (!end_time) {
+        PROF_G(error) = true;
+        return;
+    }
+
+    zval opline_time;
+    ZVAL_DOUBLE(&opline_time, (double)(end_time - PROF_G(opcode_last_time)) / 1000000);
+    zend_hash_index_update(Z_ARR_P(file_timings), PROF_G(opcode_last_lineno), &opline_time);
+
+    PROF_G(opcode_last_file) = filename;
+    PROF_G(opcode_last_lineno) = lineno;
+    PROF_G(opcode_last_time) = end_time;
 }
