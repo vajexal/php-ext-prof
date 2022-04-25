@@ -10,6 +10,7 @@
 ZEND_EXTERN_MODULE_GLOBALS(prof)
 
 static void *prof_sample_handler(void *args);
+static void prof_process_sample(volatile zend_execute_data *execute_data);
 
 zend_result prof_sampling_init() {
     return SUCCESS;
@@ -62,20 +63,31 @@ static void *prof_sample_handler(void *args) {
     srand(time(NULL));
 
     while (PROF_G(sampling_enabled)) {
-        volatile zend_execute_data *execute_data = EG(current_execute_data);
-
-        if (!execute_data || !execute_data->func || !ZEND_USER_CODE(execute_data->func->type)) {
-            usleep(PROF_SAMPLING_INTERVAL);
-            continue;
-        }
-
-        zend_string *function_name = get_function_name(execute_data->func);
-        zval *timing = zend_hash_lookup(&PROF_G(sampling_hits), function_name);
-        increment_function(timing);
-        zend_string_release(function_name);
+        prof_process_sample(EG(current_execute_data));
 
         usleep(PROF_SAMPLING_INTERVAL);
     }
 
     return NULL;
+}
+
+static void prof_process_sample(volatile zend_execute_data *execute_data) {
+    zend_function *func;
+
+    if (!execute_data || !execute_data->func) {
+        return;
+    }
+
+    if (ZEND_USER_CODE(execute_data->func->type)) {
+        func = execute_data->func;
+    } else if (execute_data->prev_execute_data && execute_data->prev_execute_data->func && ZEND_USER_CODE(execute_data->prev_execute_data->func->type)) {
+        func = execute_data->prev_execute_data->func;
+    } else {
+        return;
+    }
+
+    zend_string *function_name = get_function_name(func);
+    zval *timing = zend_hash_lookup(&PROF_G(sampling_hits), function_name);
+    increment_function(timing);
+    zend_string_release(function_name);
 }
