@@ -5,6 +5,8 @@
 
 #include <time.h>
 
+ZEND_EXTERN_MODULE_GLOBALS(prof)
+
 zend_ulong get_time() {
     struct timespec ts;
 
@@ -62,4 +64,15 @@ uint16_t get_prof_key_column_length(HashTable *profile) {
     } ZEND_HASH_FOREACH_END();
 
     return MAX(MIN_KEY_COLUMN_LENGTH, MIN(max_function_name_length, MAX_KEY_COLUMN_LENGTH));
+}
+
+void prof_print_common_header() {
+    zend_ulong end_time = get_time();
+    if (!end_time) {
+        return;
+    }
+
+    double total_time = (double)(end_time - PROF_G(start_time)) / 1000000;
+
+    php_printf("total time %.6fs\n\n", total_time);
 }

@@ -46,6 +46,10 @@ PHP_RINIT_FUNCTION (prof) {
 #endif
 
     PROF_G(error) = false;
+    PROF_G(start_time) = get_time();
+    if (!PROF_G(start_time)) {
+        return FAILURE;
+    }
 
     switch (PROF_G(mode)) {
         case PROF_MODE_SAMPLING:
@@ -62,17 +66,31 @@ PHP_RINIT_FUNCTION (prof) {
 PHP_RSHUTDOWN_FUNCTION (prof) {
     if (PROF_G(error)) {
         php_printf("There was error during profiling\n");
+    } else {
+        if (PROF_G(mode) != PROF_MODE_NONE) {
+            prof_print_common_header();
+        }
+
+        switch (PROF_G(mode)) {
+            case PROF_MODE_SAMPLING:
+                prof_sampling_print_result();
+                break;
+            case PROF_MODE_FUNC:
+                prof_func_print_result();
+                break;
+            case PROF_MODE_OPCODE: {
+                prof_opcode_print_result();
+                break;
+            }
+        }
     }
 
     switch (PROF_G(mode)) {
         case PROF_MODE_SAMPLING:
-            prof_sampling_print_result();
             return prof_sampling_teardown();
         case PROF_MODE_FUNC:
-            prof_func_print_result();
             return prof_func_teardown();
         case PROF_MODE_OPCODE: {
-            prof_opcode_print_result();
             return prof_opcode_teardown();
         }
     }

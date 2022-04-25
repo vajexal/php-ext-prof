@@ -39,7 +39,6 @@ void prof_sampling_print_result() {
     zend_string *function_name;
     uint16_t function_name_column_length = get_prof_key_column_length(&PROF_G(sampling_hits));
 
-    php_printf("Profiling results\n\n");
     php_printf("%-*s hits\n", function_name_column_length, "function");
 
     zend_hash_sort(&PROF_G(sampling_hits), prof_compare_reverse_numeric_unstable_i, 0);

@@ -28,7 +28,6 @@ void prof_func_print_result() {
     zend_string *function_name;
     uint16_t function_name_column_length = get_prof_key_column_length(&PROF_G(func_timings));
 
-    php_printf("Profiling results\n\n");
     php_printf("%-*s time\n", function_name_column_length, "function");
 
     zend_hash_sort(&PROF_G(func_timings), prof_compare_reverse_numeric_unstable_i, 0);

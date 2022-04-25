@@ -20,6 +20,7 @@ ZEND_TSRMLS_CACHE_EXTERN()
 ZEND_BEGIN_MODULE_GLOBALS(prof)
     uint8_t mode;
     bool error;
+    zend_ulong start_time;
 
     bool sampling_enabled;
     pthread_t sampling_thread;

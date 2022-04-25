@@ -42,7 +42,6 @@ void prof_opcode_print_result() {
         line_column_length += 5;
     }
 
-    php_printf("Profiling results\n\n");
     php_printf("%-*s time\n", line_column_length, "line");
 
     ZEND_HASH_FOREACH_STR_KEY_VAL(&PROF_G(opcode_timings), filename, func_timings) {
