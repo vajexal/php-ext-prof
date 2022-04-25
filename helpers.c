@@ -74,5 +74,5 @@ void prof_print_common_header() {
 
     double total_time = (double)(end_time - PROF_G(start_time)) / 1000000;
 
-    php_printf("total time %.6fs\n\n", total_time);
+    php_printf("total time: %.6fs\n\n", total_time);
 }

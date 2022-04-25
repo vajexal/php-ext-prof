@@ -37,15 +37,22 @@ zend_result prof_sampling_teardown() {
 
 void prof_sampling_print_result() {
     zend_string *function_name;
+    zval *hits;
     uint16_t function_name_column_length = get_prof_key_column_length(&PROF_G(sampling_hits));
+    zend_ulong total_samples = 0;
 
+    ZEND_HASH_FOREACH_VAL(&PROF_G(sampling_hits), hits) {
+        total_samples += Z_LVAL_P(hits);
+    } ZEND_HASH_FOREACH_END();
+
+    php_printf("total samples: %ld\n", total_samples);
     php_printf("%-*s hits\n", function_name_column_length, "function");
 
     zend_hash_sort(&PROF_G(sampling_hits), prof_compare_reverse_numeric_unstable_i, 0);
 
-    zval *hits;
     ZEND_HASH_FOREACH_STR_KEY_VAL(&PROF_G(sampling_hits), function_name, hits) {
-        php_printf("%-*s %ld\n", function_name_column_length, ZSTR_VAL(function_name), Z_LVAL_P(hits));
+        php_printf("%-*s %ld (%d%%)\n", function_name_column_length, ZSTR_VAL(function_name), Z_LVAL_P(hits),
+                   (int)((float)Z_LVAL_P(hits) / total_samples * 100));
     } ZEND_HASH_FOREACH_END();
 }
 
