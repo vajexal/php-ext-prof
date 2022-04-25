@@ -9,6 +9,8 @@
 
 ZEND_EXTERN_MODULE_GLOBALS(prof)
 
+static void *prof_sample_handler(void *args);
+
 zend_result prof_sampling_init() {
     return SUCCESS;
 }

@@ -4,6 +4,9 @@
 
 ZEND_EXTERN_MODULE_GLOBALS(prof)
 
+static int prof_opcode_handler(zend_execute_data *execute_data);
+static void prof_opcode_handler_count_timings(zend_execute_data *execute_data);
+
 zend_result prof_opcode_init() {
     // todo handle some subset of opcodes
     for (uint16_t i = 0; i < 256; i++) {

@@ -4,6 +4,10 @@
 
 ZEND_EXTERN_MODULE_GLOBALS(prof)
 
+static zend_observer_fcall_handlers prof_observer(zend_execute_data *execute_data);
+static void prof_observer_begin(zend_execute_data *execute_data);
+static void prof_observer_end(zend_execute_data *execute_data, zval *retval);
+
 zend_result prof_func_init() {
     zend_observer_fcall_register(prof_observer);
 
