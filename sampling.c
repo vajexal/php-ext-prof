@@ -5,6 +5,7 @@
 #include <pthread.h>
 #include <time.h>
 
+#define SAMPLING_HITS_DEFAULT_CAPACITY 4096
 #define PROF_SAMPLING_INTERVAL 1000 + rand() % 500
 
 ZEND_EXTERN_MODULE_GLOBALS(prof)
@@ -18,7 +19,7 @@ zend_result prof_sampling_init() {
 
 zend_result prof_sampling_setup() {
     PROF_G(sampling_enabled) = true;
-    zend_hash_init(&PROF_G(sampling_hits), HT_MIN_SIZE, NULL, NULL, 0); // todo size
+    zend_hash_init(&PROF_G(sampling_hits), SAMPLING_HITS_DEFAULT_CAPACITY, NULL, NULL, 0);
 
     if (pthread_create(&PROF_G(sampling_thread), NULL, prof_sample_handler, NULL)) {
         return FAILURE;

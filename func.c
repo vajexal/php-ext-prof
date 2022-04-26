@@ -2,6 +2,8 @@
 #include "php_prof.h"
 #include "helpers.h"
 
+#define FUNC_TIMINGS_DEFAULT_CAPACITY 4096
+
 ZEND_EXTERN_MODULE_GLOBALS(prof)
 
 static zend_observer_fcall_handlers prof_observer(zend_execute_data *execute_data);
@@ -15,7 +17,7 @@ zend_result prof_func_init() {
 }
 
 zend_result prof_func_setup() {
-    zend_hash_init(&PROF_G(func_timings), HT_MIN_SIZE, NULL, NULL, 0); // todo
+    zend_hash_init(&PROF_G(func_timings), FUNC_TIMINGS_DEFAULT_CAPACITY, NULL, NULL, 0);
     zend_stack_init(&PROF_G(func_start_times), sizeof(zend_ulong));
 
     return SUCCESS;

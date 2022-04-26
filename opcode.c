@@ -2,6 +2,9 @@
 #include "php_prof.h"
 #include "helpers.h"
 
+#define OPCODE_TIMINGS_DEFAULT_CAPACITY 1024
+#define OPCODE_LINES_DEFAULT_CAPACITY 128
+
 ZEND_EXTERN_MODULE_GLOBALS(prof)
 
 static int prof_opcode_handler(zend_execute_data *execute_data);
@@ -17,7 +20,7 @@ zend_result prof_opcode_init() {
 }
 
 zend_result prof_opcode_setup() {
-    zend_hash_init(&PROF_G(opcode_timings), HT_MIN_SIZE, NULL, NULL, 0); // todo
+    zend_hash_init(&PROF_G(opcode_timings), OPCODE_TIMINGS_DEFAULT_CAPACITY, NULL, NULL, 0);
 
     return SUCCESS;
 }
@@ -83,7 +86,7 @@ static void prof_opcode_handler_count_timings(zend_execute_data *execute_data) {
 
     zval *file_timings = zend_hash_lookup(&PROF_G(opcode_timings), filename);
     if (ZVAL_IS_NULL(file_timings)) {
-        array_init(file_timings);
+        array_init_size(file_timings, OPCODE_LINES_DEFAULT_CAPACITY);
     }
 
     if (filename == PROF_G(opcode_last_file) && lineno == PROF_G(opcode_last_lineno)) {
