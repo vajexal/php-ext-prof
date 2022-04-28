@@ -40,10 +40,15 @@ uint8_t get_prof_mode() {
 }
 
 zend_string *get_function_name(zend_function *func) {
-    if (func->common.fn_flags & ZEND_ACC_CLOSURE && ZEND_USER_CODE(func->type)) {
+    if ((func->common.fn_flags & ZEND_ACC_CLOSURE) && ZEND_USER_CODE(func->type)) {
         smart_str closure_name = {0};
         smart_str_append_printf(&closure_name, "closure %s:%d", ZSTR_VAL(func->op_array.filename), func->op_array.line_start);
         return smart_str_extract(&closure_name);
+    }
+
+    // could be 'require' from class method
+    if (func->common.scope && !func->common.function_name) {
+        return zend_string_init("main", sizeof("main") - 1, 0);
     }
 
     return get_function_or_method_name(func);
