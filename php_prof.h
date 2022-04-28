@@ -23,7 +23,6 @@ ZEND_BEGIN_MODULE_GLOBALS(prof)
     zend_ulong start_time;
 
     bool sampling_enabled;
-    pthread_t sampling_thread;
     HashTable sampling_hits;
 
     zend_stack func_start_times;

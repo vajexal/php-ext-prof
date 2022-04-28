@@ -2,7 +2,6 @@
 #include "php_prof.h"
 #include "helpers.h"
 
-#include <pthread.h>
 #include <time.h>
 
 #define SAMPLING_HITS_DEFAULT_CAPACITY 4096
@@ -10,8 +9,7 @@
 
 ZEND_EXTERN_MODULE_GLOBALS(prof)
 
-static void *prof_sample_handler(void *args);
-static void prof_process_sample(volatile zend_execute_data *execute_data);
+void prof_sigprof_handler(int signo);
 
 zend_result prof_sampling_init() {
     return SUCCESS;
@@ -21,7 +19,13 @@ zend_result prof_sampling_setup() {
     PROF_G(sampling_enabled) = true;
     zend_hash_init(&PROF_G(sampling_hits), SAMPLING_HITS_DEFAULT_CAPACITY, NULL, NULL, 0);
 
-    if (pthread_create(&PROF_G(sampling_thread), NULL, prof_sample_handler, NULL)) {
+    zend_signal(SIGPROF, prof_sigprof_handler);
+
+    struct itimerval timeout;
+    timeout.it_value.tv_sec = timeout.it_interval.tv_sec = 0;
+    timeout.it_value.tv_usec = timeout.it_interval.tv_usec = PROF_SAMPLING_INTERVAL;
+
+    if (setitimer(ITIMER_PROF, &timeout, NULL)) {
         return FAILURE;
     }
 
@@ -30,7 +34,11 @@ zend_result prof_sampling_setup() {
 
 zend_result prof_sampling_teardown() {
     PROF_G(sampling_enabled) = false;
-    if (pthread_join(PROF_G(sampling_thread), NULL)) {
+
+    struct itimerval no_timeout;
+    no_timeout.it_value.tv_sec = no_timeout.it_value.tv_usec = no_timeout.it_interval.tv_sec = no_timeout.it_interval.tv_usec = 0;
+
+    if (setitimer(ITIMER_PROF, &no_timeout, NULL)) {
         return FAILURE;
     }
 
@@ -50,6 +58,9 @@ void prof_sampling_print_result() {
     } ZEND_HASH_FOREACH_END();
 
     php_printf("total samples: %ld\n", total_samples);
+    if (total_samples == 0) {
+        return;
+    }
     php_printf("%-*s hits\n", function_name_column_length, "function");
 
     zend_hash_sort(&PROF_G(sampling_hits), prof_compare_reverse_numeric_unstable_i, 0);
@@ -60,34 +71,26 @@ void prof_sampling_print_result() {
     } ZEND_HASH_FOREACH_END();
 }
 
-static void *prof_sample_handler(void *args) {
-    srand(time(NULL));
-
-    while (PROF_G(sampling_enabled)) {
-        prof_process_sample(EG(current_execute_data));
-
-        usleep(PROF_SAMPLING_INTERVAL);
-    }
-
-    return NULL;
-}
-
-static void prof_process_sample(volatile zend_execute_data *execute_data) {
-    zend_function *func;
-
-    if (!execute_data || !execute_data->func) {
+void prof_sigprof_handler(int signo) {
+    if (!PROF_G(sampling_enabled)) {
         return;
     }
 
-    if (ZEND_USER_CODE(execute_data->func->type)) {
-        func = execute_data->func;
-    } else if (execute_data->prev_execute_data && execute_data->prev_execute_data->func && ZEND_USER_CODE(execute_data->prev_execute_data->func->type)) {
-        func = execute_data->prev_execute_data->func;
-    } else {
+    zend_execute_data *execute_data = EG(current_execute_data);
+
+    while (execute_data && (!execute_data->func || !ZEND_USER_CODE(execute_data->func->type))) {
+        execute_data = execute_data->prev_execute_data;
+    }
+
+    if (!execute_data) {
         return;
     }
 
-    zend_string *function_name = get_function_name(func);
+    zend_string *function_name = get_function_name(execute_data->func);
+    if (!function_name) {
+        PROF_G(error) = true;
+        return;
+    }
     zval *timing = zend_hash_lookup(&PROF_G(sampling_hits), function_name);
     increment_function(timing);
     zend_string_release(function_name);
