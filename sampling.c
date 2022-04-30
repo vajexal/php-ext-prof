@@ -21,6 +21,7 @@ zend_result prof_sampling_setup() {
 
     zend_signal(SIGPROF, prof_sigprof_handler);
 
+    srand(time(NULL));
     struct itimerval timeout;
     timeout.it_value.tv_sec = timeout.it_interval.tv_sec = 0;
     timeout.it_value.tv_usec = timeout.it_interval.tv_usec = PROF_SAMPLING_INTERVAL;
