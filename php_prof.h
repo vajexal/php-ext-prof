@@ -3,6 +3,9 @@
 #ifndef PHP_PROF_H
 # define PHP_PROF_H
 
+#include <pthread.h>
+#include <stdatomic.h>
+
 extern zend_module_entry prof_module_entry;
 # define phpext_prof_ptr &prof_module_entry
 
@@ -23,6 +26,9 @@ ZEND_BEGIN_MODULE_GLOBALS(prof)
     zend_ulong start_time;
 
     bool sampling_enabled;
+    uint sampling_interval;
+    pthread_t sampling_thread;
+    atomic_uint sampling_ticks;
     HashTable sampling_hits;
 
     zend_stack func_start_times;
