@@ -4,6 +4,11 @@
 #include "php.h"
 #include "zend_observer.h"
 
+typedef struct {
+    double time;
+    uint32_t calls;
+} prof_func_entry;
+
 zend_result prof_func_init();
 zend_result prof_func_setup();
 zend_result prof_func_teardown();

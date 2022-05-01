@@ -9,6 +9,7 @@ ZEND_EXTERN_MODULE_GLOBALS(prof)
 static zend_observer_fcall_handlers prof_observer(zend_execute_data *execute_data);
 static void prof_observer_begin(zend_execute_data *execute_data);
 static void prof_observer_end(zend_execute_data *execute_data, zval *retval);
+static zend_always_inline int prof_compare_func_timings(Bucket *f, Bucket *s);
 
 zend_result prof_func_init() {
     zend_observer_fcall_register(prof_observer);
@@ -24,6 +25,10 @@ zend_result prof_func_setup() {
 }
 
 zend_result prof_func_teardown() {
+    prof_func_entry *entry;
+    ZEND_HASH_FOREACH_PTR(&PROF_G(func_timings), entry) {
+        efree(entry);
+    } ZEND_HASH_FOREACH_END();
     zend_hash_destroy(&PROF_G(func_timings));
     zend_stack_destroy(&PROF_G(func_start_times));
 
@@ -34,13 +39,13 @@ void prof_func_print_result() {
     zend_string *function_name;
     uint16_t function_name_column_length = get_prof_key_column_length(&PROF_G(func_timings));
 
-    php_printf("%-*s time\n", function_name_column_length, "function");
+    php_printf("%-*s time        calls\n", function_name_column_length, "function");
 
-    zend_hash_sort(&PROF_G(func_timings), prof_compare_reverse_numeric_unstable_i, 0);
+    zend_hash_sort(&PROF_G(func_timings), prof_compare_func_timings, 0);
 
-    zval *time;
-    ZEND_HASH_FOREACH_STR_KEY_VAL(&PROF_G(func_timings), function_name, time) {
-        php_printf("%-*s %.6fs\n", function_name_column_length, ZSTR_VAL(function_name), Z_DVAL_P(time));
+    prof_func_entry *entry;
+    ZEND_HASH_FOREACH_STR_KEY_PTR(&PROF_G(func_timings), function_name, entry) {
+        php_printf("%-*s %.6fs   %d\n", function_name_column_length, ZSTR_VAL(function_name), entry->time, entry->calls);
     } ZEND_HASH_FOREACH_END();
 }
 
@@ -90,12 +95,22 @@ static void prof_observer_end(zend_execute_data *execute_data, zval *retval) {
 
     double function_time = (double)(end_time - (*start_time)) / 1000000;
 
-    zval *timing = zend_hash_lookup(&PROF_G(func_timings), function_name);
-    if (ZVAL_IS_NULL(timing)) {
-        ZVAL_DOUBLE(timing, function_time);
-    } else {
-        ZVAL_DOUBLE(timing, Z_DVAL_P(timing) + function_time);
+    prof_func_entry *entry = zend_hash_find_ptr(&PROF_G(func_timings), function_name);
+    if (!entry) {
+        entry = emalloc(sizeof(prof_func_entry));
+        memset(entry, 0, sizeof(prof_func_entry));
+        zend_hash_add_new_ptr(&PROF_G(func_timings), function_name, entry);
     }
 
+    entry->time += function_time;
+    entry->calls++;
+
     zend_string_release(function_name);
+}
+
+static zend_always_inline int prof_compare_func_timings(Bucket *f, Bucket *s) {
+    prof_func_entry *entry_f = (prof_func_entry*)Z_PTR(f->val);
+    prof_func_entry *entry_s = (prof_func_entry*)Z_PTR(s->val);
+
+    return -ZEND_NORMALIZE_BOOL(entry_f->time - entry_s->time);
 }
