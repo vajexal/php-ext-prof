@@ -8,6 +8,7 @@
 
 #define SAMPLING_HITS_DEFAULT_CAPACITY 4096
 #define SAMPLING_TICKS_THRESHOLD 10
+#define SAMPLES_LIMIT 20
 
 ZEND_EXTERN_MODULE_GLOBALS(prof)
 
@@ -63,12 +64,12 @@ zend_result prof_sampling_teardown() {
 
 void prof_sampling_print_result() {
     zend_string *function_name;
-    zval *hits;
+    zval *samples;
     uint16_t function_name_column_length = get_prof_key_column_length(&PROF_G(sampling_hits));
     zend_ulong total_samples = 0;
 
-    ZEND_HASH_FOREACH_VAL(&PROF_G(sampling_hits), hits) {
-        total_samples += Z_LVAL_P(hits);
+    ZEND_HASH_FOREACH_VAL(&PROF_G(sampling_hits), samples) {
+        total_samples += Z_LVAL_P(samples);
     } ZEND_HASH_FOREACH_END();
 
     php_printf("total samples: %ld\n", total_samples);
@@ -78,11 +79,15 @@ void prof_sampling_print_result() {
     php_printf("%-*s hits\n", function_name_column_length, "function");
 
     zend_hash_sort(&PROF_G(sampling_hits), prof_compare_reverse_numeric_unstable_i, 0);
+    HashTable *hits = ht_slice(&PROF_G(sampling_hits), SAMPLES_LIMIT); // todo configurable
 
-    ZEND_HASH_FOREACH_STR_KEY_VAL(&PROF_G(sampling_hits), function_name, hits) {
-        php_printf("%-*s %ld (%d%%)\n", function_name_column_length, ZSTR_VAL(function_name), Z_LVAL_P(hits),
-                   (int)((float)Z_LVAL_P(hits) / total_samples * 100));
+    ZEND_HASH_FOREACH_STR_KEY_VAL(hits, function_name, samples) {
+        php_printf("%-*s %ld (%d%%)\n", function_name_column_length, ZSTR_VAL(function_name), Z_LVAL_P(samples),
+                   (int)((float)Z_LVAL_P(samples) / total_samples * 100));
     } ZEND_HASH_FOREACH_END();
+
+    zend_hash_destroy(hits);
+    efree(hits);
 }
 
 void prof_sigprof_handler(int signo) {

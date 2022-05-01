@@ -81,3 +81,28 @@ void prof_print_common_header() {
 
     php_printf("total time: %.6fs\n\n", total_time);
 }
+
+HashTable *ht_slice(HashTable *ht, zend_ulong limit) {
+    zend_ulong n = 0;  /* Current number of elements */
+    zval *entry;
+    HashTable *res = emalloc(sizeof(HashTable));
+    zend_hash_init(res, limit, NULL, NULL, 0);
+    Bucket *p = ht->arData;
+    Bucket *end = ht->arData + ht->nNumUsed;
+
+    for (; p != end; p++) {
+        entry = &p->val;
+        if (UNEXPECTED(Z_TYPE_P(entry) == IS_UNDEF)) {
+            continue;
+        }
+        if (n >= limit) {
+            break;
+        }
+        n++;
+
+        entry = zend_hash_add_new(res, p->key, entry);
+        zval_add_ref(entry);
+    }
+
+    return res;
+}
