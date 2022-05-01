@@ -3,6 +3,7 @@
 #include "helpers.h"
 
 #define FUNC_TIMINGS_DEFAULT_CAPACITY 4096
+#define FUNC_TIMINGS_LIMIT 50
 
 ZEND_EXTERN_MODULE_GLOBALS(prof)
 
@@ -42,11 +43,15 @@ void prof_func_print_result() {
     php_printf("%-*s time        calls\n", function_name_column_length, "function");
 
     zend_hash_sort(&PROF_G(func_timings), prof_compare_func_timings, 0);
+    HashTable *timings = ht_slice(&PROF_G(func_timings), FUNC_TIMINGS_LIMIT); // todo configurable
 
     prof_func_entry *entry;
-    ZEND_HASH_FOREACH_STR_KEY_PTR(&PROF_G(func_timings), function_name, entry) {
+    ZEND_HASH_FOREACH_STR_KEY_PTR(timings, function_name, entry) {
         php_printf("%-*s %.6fs   %d\n", function_name_column_length, ZSTR_VAL(function_name), entry->time, entry->calls);
     } ZEND_HASH_FOREACH_END();
+
+    zend_hash_destroy(timings);
+    efree(timings);
 }
 
 static zend_observer_fcall_handlers prof_observer(zend_execute_data *execute_data) {
