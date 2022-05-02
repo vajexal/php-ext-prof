@@ -7,6 +7,29 @@
 
 ZEND_EXTERN_MODULE_GLOBALS(prof)
 
+prof_timing *get_timing() {
+    prof_timing *timing = emalloc(sizeof(prof_timing));
+    if (!timing) {
+        return NULL;
+    }
+
+    struct timespec ts;
+
+    if (clock_gettime(CLOCK_MONOTONIC_RAW, &ts)) {
+        efree(timing);
+        return NULL;
+    }
+    timing->wall = ts.tv_sec * 1000000 + ts.tv_nsec / 1000;
+
+    if (clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ts)) {
+        efree(timing);
+        return NULL;
+    }
+    timing->cpu = ts.tv_sec * 1000000 + ts.tv_nsec / 1000;
+
+    return timing;
+}
+
 zend_ulong get_time() {
     struct timespec ts;
 

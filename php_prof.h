@@ -20,6 +20,11 @@ extern zend_module_entry prof_module_entry;
 ZEND_TSRMLS_CACHE_EXTERN()
 # endif
 
+typedef struct {
+    zend_ulong wall;
+    zend_ulong cpu;
+} prof_timing;
+
 ZEND_BEGIN_MODULE_GLOBALS(prof)
     uint8_t mode;
     bool error;

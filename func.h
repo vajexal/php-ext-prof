@@ -5,7 +5,8 @@
 #include "zend_observer.h"
 
 typedef struct {
-    double time;
+    double wall_time;
+    double cpu_time;
     uint32_t calls;
 } prof_func_entry;
 

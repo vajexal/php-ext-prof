@@ -2,10 +2,12 @@
 #define PROF_HELPERS_H
 
 #include "php.h"
+#include "php_prof.h"
 
 #define MIN_KEY_COLUMN_LENGTH 20
 #define MAX_KEY_COLUMN_LENGTH 120
 
+prof_timing *get_timing();
 zend_ulong get_time();
 uint8_t get_prof_mode();
 zend_string *get_function_name(zend_function *func);
