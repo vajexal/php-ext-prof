@@ -23,6 +23,7 @@ ZEND_TSRMLS_CACHE_EXTERN()
 typedef struct {
     zend_ulong wall;
     zend_ulong cpu;
+    zend_ulong memory;
 } prof_timing;
 
 ZEND_BEGIN_MODULE_GLOBALS(prof)

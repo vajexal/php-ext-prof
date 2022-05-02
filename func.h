@@ -7,6 +7,7 @@
 typedef struct {
     double wall_time;
     double cpu_time;
+    zend_long memory;
     uint32_t calls;
 } prof_func_entry;
 

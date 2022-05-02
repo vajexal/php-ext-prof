@@ -27,6 +27,8 @@ prof_timing *get_timing() {
     }
     timing->cpu = ts.tv_sec * 1000000 + ts.tv_nsec / 1000;
 
+    timing->memory = zend_memory_usage(false);
+
     return timing;
 }
 
@@ -128,4 +130,16 @@ HashTable *ht_slice(HashTable *ht, zend_ulong limit) {
     }
 
     return res;
+}
+
+void get_memory_with_units(zend_long memory, char *buf, size_t buf_len) {
+    memory = ZEND_ABS(memory);
+
+    if (memory < 1024) {
+        snprintf(buf, buf_len, "%ld b", memory);
+    } else if (memory < 1024 * 1024) {
+        snprintf(buf, buf_len, "%.2f kb", (float)memory / 1024);
+    } else {
+        snprintf(buf, buf_len, "%.2f mb", (float)memory / 1024 / 1024);
+    }
 }
