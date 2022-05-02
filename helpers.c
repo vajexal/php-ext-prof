@@ -7,29 +7,29 @@
 
 ZEND_EXTERN_MODULE_GLOBALS(prof)
 
-prof_timing *get_timing() {
-    prof_timing *timing = emalloc(sizeof(prof_timing));
-    if (!timing) {
+prof_unit *get_prof_unit() {
+    prof_unit *unit = emalloc(sizeof(prof_unit));
+    if (!unit) {
         return NULL;
     }
 
     struct timespec ts;
 
     if (clock_gettime(CLOCK_MONOTONIC_RAW, &ts)) {
-        efree(timing);
+        efree(unit);
         return NULL;
     }
-    timing->wall = ts.tv_sec * 1000000 + ts.tv_nsec / 1000;
+    unit->wall = ts.tv_sec * 1000000 + ts.tv_nsec / 1000;
 
     if (clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ts)) {
-        efree(timing);
+        efree(unit);
         return NULL;
     }
-    timing->cpu = ts.tv_sec * 1000000 + ts.tv_nsec / 1000;
+    unit->cpu = ts.tv_sec * 1000000 + ts.tv_nsec / 1000;
 
-    timing->memory = zend_memory_usage(false);
+    unit->memory = zend_memory_usage(false);
 
-    return timing;
+    return unit;
 }
 
 zend_ulong get_time() {

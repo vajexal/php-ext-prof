@@ -7,7 +7,7 @@
 #define MIN_KEY_COLUMN_LENGTH 20
 #define MAX_KEY_COLUMN_LENGTH 120
 
-prof_timing *get_timing();
+prof_unit *get_prof_unit();
 zend_ulong get_time();
 uint8_t get_prof_mode();
 zend_string *get_function_name(zend_function *func);

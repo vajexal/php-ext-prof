@@ -24,7 +24,7 @@ typedef struct {
     zend_ulong wall;
     zend_ulong cpu;
     zend_ulong memory;
-} prof_timing;
+} prof_unit;
 
 ZEND_BEGIN_MODULE_GLOBALS(prof)
     uint8_t mode;
@@ -37,8 +37,8 @@ ZEND_BEGIN_MODULE_GLOBALS(prof)
     atomic_uint sampling_ticks;
     HashTable sampling_hits;
 
-    zend_stack func_start_times;
-    HashTable func_timings;
+    zend_stack func_start_units;
+    HashTable func_units;
 
     zend_string *opcode_last_file;
     uint32_t opcode_last_lineno;

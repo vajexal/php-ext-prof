@@ -9,7 +9,7 @@ typedef struct {
     double cpu_time;
     zend_long memory;
     uint32_t calls;
-} prof_func_entry;
+} prof_func_unit;
 
 zend_result prof_func_init();
 zend_result prof_func_setup();
