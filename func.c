@@ -4,6 +4,7 @@
 
 #define FUNC_UNITS_DEFAULT_CAPACITY 4096
 #define FUNC_UNITS_LIMIT 50
+#define FUNC_THRESHOLD 0.000001
 
 ZEND_EXTERN_MODULE_GLOBALS(prof)
 
@@ -48,6 +49,10 @@ void prof_func_print_result() {
     prof_func_unit *func_unit;
     char memory_buf[80];
     ZEND_HASH_FOREACH_STR_KEY_PTR(func_units, function_name, func_unit) {
+        if (func_unit->wall_time <= FUNC_THRESHOLD) { // todo configurable
+            continue;
+        }
+
         memset(memory_buf, 0, sizeof(memory_buf));
         get_memory_with_units(func_unit->memory, memory_buf, sizeof(memory_buf));
         php_printf("%-*s %.6fs   %.6fs   %-10s %d\n",
