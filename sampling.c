@@ -9,6 +9,7 @@
 #define SAMPLING_HITS_DEFAULT_CAPACITY 4096
 #define SAMPLING_TICKS_THRESHOLD 10
 #define SAMPLES_LIMIT 20
+#define SAMPLING_THRESHOLD 1
 
 ZEND_EXTERN_MODULE_GLOBALS(prof)
 
@@ -82,6 +83,10 @@ void prof_sampling_print_result() {
     HashTable *hits = ht_slice(&PROF_G(sampling_hits), SAMPLES_LIMIT); // todo configurable
 
     ZEND_HASH_FOREACH_STR_KEY_VAL(hits, function_name, samples) {
+        if (Z_LVAL_P(samples) <= SAMPLING_THRESHOLD) { // todo configurable
+            continue;
+        }
+
         php_printf("%-*s %ld (%d%%)\n", function_name_column_length, ZSTR_VAL(function_name), Z_LVAL_P(samples),
                    (int)((float)Z_LVAL_P(samples) / total_samples * 100));
     } ZEND_HASH_FOREACH_END();
