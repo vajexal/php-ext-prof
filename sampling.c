@@ -2,6 +2,9 @@
 #include "php_prof.h"
 #include "helpers.h"
 
+#include <php_main.h>
+#include <zend_smart_string.h>
+
 #include <time.h>
 #include <pthread.h>
 #include <signal.h>
@@ -103,7 +106,6 @@ void prof_sampling_print_result_console() {
 
 void prof_sampling_print_result_callgrind() {
     char filename_buf[80];
-    memset(filename_buf, 0, sizeof(filename_buf));
     snprintf(filename_buf, sizeof(filename_buf), "callgrind.out.%d", getpid());
 
     FILE *fp = fopen(filename_buf, "w");
@@ -111,8 +113,17 @@ void prof_sampling_print_result_callgrind() {
         return;
     }
 
-    fprintf(fp, "# callgrind format\nversion: 1\npart: 1\n\nevents: Hits\n\n");
-    // todo cmd
+    smart_string cmd = {0};
+    for (int i = 0; i < SG(request_info).argc; ++i) {
+        smart_string_appends(&cmd, SG(request_info).argv[i]);
+        if (i + 1 < SG(request_info).argc) {
+            smart_string_appendc(&cmd, ' ');
+        }
+    }
+    smart_string_0(&cmd);
+
+    fprintf(fp, "# callgrind format\nversion: 1\ncmd: %s\npart: 1\n\nevents: Hits\n\n", cmd.c);
+
     // todo summary
 
     zend_string *function_name;
@@ -128,6 +139,7 @@ void prof_sampling_print_result_callgrind() {
 
     // todo totals
 
+    smart_string_free(&cmd);
     fclose(fp);
 }
 
