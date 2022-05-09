@@ -15,6 +15,7 @@ ZEND_EXTERN_MODULE_GLOBALS(prof)
 
 void prof_sigprof_handler(int signo);
 void *prof_ticker(void *args);
+static zend_always_inline int prof_compare_sampling_units(Bucket *f, Bucket *s);
 
 zend_result prof_sampling_init() {
     return SUCCESS;
@@ -22,7 +23,7 @@ zend_result prof_sampling_init() {
 
 zend_result prof_sampling_setup() {
     PROF_G(sampling_enabled) = true;
-    zend_hash_init(&PROF_G(sampling_hits), SAMPLING_HITS_DEFAULT_CAPACITY, NULL, NULL, 0);
+    zend_hash_init(&PROF_G(sampling_units), SAMPLING_HITS_DEFAULT_CAPACITY, NULL, NULL, 0);
     PROF_G(sampling_ticks) = ATOMIC_VAR_INIT(0);
 
     zend_signal(SIGPROF, prof_sigprof_handler);
@@ -58,19 +59,24 @@ zend_result prof_sampling_teardown() {
         return FAILURE;
     }
 
-    zend_hash_destroy(&PROF_G(sampling_hits));
+    prof_sampling_unit *sampling_unit;
+    ZEND_HASH_FOREACH_PTR(&PROF_G(sampling_units), sampling_unit) {
+        zend_string_release(sampling_unit->filename);
+        efree(sampling_unit);
+    } ZEND_HASH_FOREACH_END();
+    zend_hash_destroy(&PROF_G(sampling_units));
 
     return SUCCESS;
 }
 
-void prof_sampling_print_result() {
+void prof_sampling_print_result_console() {
     zend_string *function_name;
-    zval *samples;
-    uint16_t function_name_column_length = get_prof_key_column_length(&PROF_G(sampling_hits));
+    prof_sampling_unit *sampling_unit;
+    uint16_t function_name_column_length = get_prof_key_column_length(&PROF_G(sampling_units));
     zend_ulong total_samples = 0;
 
-    ZEND_HASH_FOREACH_VAL(&PROF_G(sampling_hits), samples) {
-        total_samples += Z_LVAL_P(samples);
+    ZEND_HASH_FOREACH_PTR(&PROF_G(sampling_units), sampling_unit) {
+        total_samples += sampling_unit->hits;
     } ZEND_HASH_FOREACH_END();
 
     php_printf("total samples: %ld\n", total_samples);
@@ -79,20 +85,50 @@ void prof_sampling_print_result() {
     }
     php_printf("%-*s hits\n", function_name_column_length, "function");
 
-    zend_hash_sort(&PROF_G(sampling_hits), prof_compare_reverse_numeric_unstable_i, 0);
-    HashTable *hits = ht_slice(&PROF_G(sampling_hits), SAMPLES_LIMIT); // todo configurable
+    zend_hash_sort(&PROF_G(sampling_units), prof_compare_sampling_units, 0);
+    HashTable *hits = ht_slice(&PROF_G(sampling_units), SAMPLES_LIMIT); // todo configurable
 
-    ZEND_HASH_FOREACH_STR_KEY_VAL(hits, function_name, samples) {
-        if (Z_LVAL_P(samples) <= SAMPLING_THRESHOLD) { // todo configurable
+    ZEND_HASH_FOREACH_STR_KEY_PTR(hits, function_name, sampling_unit) {
+        if (sampling_unit->hits <= SAMPLING_THRESHOLD) { // todo configurable
             continue;
         }
 
-        php_printf("%-*s %ld (%d%%)\n", function_name_column_length, ZSTR_VAL(function_name), Z_LVAL_P(samples),
-                   (int)((float)Z_LVAL_P(samples) / total_samples * 100));
+        php_printf("%-*s %ld (%d%%)\n", function_name_column_length, ZSTR_VAL(function_name), sampling_unit->hits,
+                   (int)((float)sampling_unit->hits / total_samples * 100));
     } ZEND_HASH_FOREACH_END();
 
     zend_hash_destroy(hits);
     efree(hits);
+}
+
+void prof_sampling_print_result_callgrind() {
+    char filename_buf[80];
+    memset(filename_buf, 0, sizeof(filename_buf));
+    snprintf(filename_buf, sizeof(filename_buf), "callgrind.out.%d", getpid());
+
+    FILE *fp = fopen(filename_buf, "w");
+    if (!fp) {
+        return;
+    }
+
+    fprintf(fp, "# callgrind format\nversion: 1\npart: 1\n\nevents: Hits\n\n");
+    // todo cmd
+    // todo summary
+
+    zend_string *function_name;
+    prof_sampling_unit *sampling_unit;
+    ZEND_HASH_FOREACH_STR_KEY_PTR(&PROF_G(sampling_units), function_name, sampling_unit) {
+        if (sampling_unit->hits <= SAMPLING_THRESHOLD) { // todo configurable
+            continue;
+        }
+
+        // todo name compression
+        fprintf(fp, "fl=%s\nfn=%s\n%d %lu\n\n", ZSTR_VAL(sampling_unit->filename), ZSTR_VAL(function_name), sampling_unit->lineno, sampling_unit->hits);
+    } ZEND_HASH_FOREACH_END();
+
+    // todo totals
+
+    fclose(fp);
 }
 
 void prof_sigprof_handler(int signo) {
@@ -119,12 +155,16 @@ void prof_sigprof_handler(int signo) {
         return;
     }
 
-    zval *timing = zend_hash_lookup(&PROF_G(sampling_hits), function_name);
-    if (ZVAL_IS_NULL(timing)) {
-        ZVAL_LONG(timing, ticks);
-    } else {
-        Z_LVAL_P(timing) += ticks;
+    prof_sampling_unit *sampling_unit = zend_hash_find_ptr(&PROF_G(sampling_units), function_name);
+    if (!sampling_unit) {
+        sampling_unit = emalloc(sizeof(prof_sampling_unit));
+        memset(sampling_unit, 0, sizeof(prof_sampling_unit));
+        sampling_unit->filename = zend_string_copy(execute_data->func->op_array.filename);
+        sampling_unit->lineno = execute_data->func->op_array.line_start;
+        zend_hash_add_new_ptr(&PROF_G(sampling_units), function_name, sampling_unit);
     }
+
+    sampling_unit->hits += ticks;
 
     zend_string_release(function_name);
 }
@@ -151,4 +191,11 @@ void *prof_ticker(void *args) {
     }
 
     return NULL;
+}
+
+static zend_always_inline int prof_compare_sampling_units(Bucket *f, Bucket *s) {
+    prof_sampling_unit *sampling_unit_f = (prof_sampling_unit *)Z_PTR(f->val);
+    prof_sampling_unit *sampling_unit_s = (prof_sampling_unit *)Z_PTR(s->val);
+
+    return sampling_unit_f->hits == sampling_unit_s->hits ? 0 : (sampling_unit_f->hits > sampling_unit_s->hits ? -1 : 1);
 }

@@ -42,7 +42,7 @@ zend_ulong get_time() {
     return ts.tv_sec * 1000000 + ts.tv_nsec / 1000;
 }
 
-uint8_t get_prof_mode() {
+prof_mode get_prof_mode() {
     if (strcmp(sapi_module.name, "cli") != 0) {
         return PROF_MODE_NONE;
     }
@@ -62,6 +62,20 @@ uint8_t get_prof_mode() {
     }
 
     return PROF_MODE_NONE;
+}
+
+prof_output_mode get_prof_output_mode() {
+    const char *mode = getenv("PROF_OUTPUT_MODE");
+
+    if (!mode) {
+        return PROF_OUTPUT_MODE_CONSOLE;
+    }
+
+    if (strcmp(mode, "callgrind") == 0) {
+        return PROF_OUTPUT_MODE_CALLGRIND;
+    }
+
+    return PROF_OUTPUT_MODE_CONSOLE;
 }
 
 zend_string *get_function_name(zend_function *func) {

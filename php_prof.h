@@ -11,10 +11,17 @@ extern zend_module_entry prof_module_entry;
 
 # define PHP_PROF_VERSION "0.1.0"
 
-#define PROF_MODE_NONE 0
-#define PROF_MODE_SAMPLING 1
-#define PROF_MODE_FUNC 2
-#define PROF_MODE_OPCODE 3
+typedef enum {
+    PROF_MODE_NONE,
+    PROF_MODE_SAMPLING,
+    PROF_MODE_FUNC,
+    PROF_MODE_OPCODE,
+} prof_mode;
+
+typedef enum {
+    PROF_OUTPUT_MODE_CONSOLE,
+    PROF_OUTPUT_MODE_CALLGRIND,
+} prof_output_mode;
 
 # if defined(ZTS) && defined(COMPILE_DL_PROF)
 ZEND_TSRMLS_CACHE_EXTERN()
@@ -28,6 +35,7 @@ typedef struct {
 
 ZEND_BEGIN_MODULE_GLOBALS(prof)
     uint8_t mode;
+    uint8_t output_mode;
     bool error;
     zend_ulong start_time;
 
@@ -35,7 +43,7 @@ ZEND_BEGIN_MODULE_GLOBALS(prof)
     uint sampling_interval;
     pthread_t sampling_thread;
     atomic_uint sampling_ticks;
-    HashTable sampling_hits;
+    HashTable sampling_units;
 
     zend_stack func_start_units;
     HashTable func_units;

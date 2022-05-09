@@ -27,6 +27,7 @@ PHP_MINIT_FUNCTION (prof) {
 #endif
 
     PROF_G(mode) = get_prof_mode();
+    PROF_G(output_mode) = get_prof_output_mode();
 
     switch (PROF_G(mode)) {
         case PROF_MODE_SAMPLING:
@@ -67,13 +68,20 @@ PHP_RSHUTDOWN_FUNCTION (prof) {
     if (PROF_G(error)) {
         php_printf("There was error during profiling\n");
     } else {
-        if (PROF_G(mode) != PROF_MODE_NONE) {
+        if (PROF_G(mode) != PROF_MODE_NONE && PROF_G(output_mode) == PROF_OUTPUT_MODE_CONSOLE) {
             prof_print_common_header();
         }
 
         switch (PROF_G(mode)) {
             case PROF_MODE_SAMPLING:
-                prof_sampling_print_result();
+                switch (PROF_G(output_mode)) {
+                    case PROF_OUTPUT_MODE_CONSOLE:
+                        prof_sampling_print_result_console();
+                        break;
+                    case PROF_OUTPUT_MODE_CALLGRIND:
+                        prof_sampling_print_result_callgrind();
+                        break;
+                }
                 break;
             case PROF_MODE_FUNC:
                 prof_func_print_result();

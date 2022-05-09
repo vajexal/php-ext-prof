@@ -9,7 +9,8 @@
 
 prof_unit *get_prof_unit();
 zend_ulong get_time();
-uint8_t get_prof_mode();
+prof_mode get_prof_mode();
+prof_output_mode get_prof_output_mode();
 zend_string *get_function_name(zend_function *func);
 int prof_compare_reverse_numeric_unstable_i(Bucket *f, Bucket *s);
 uint16_t get_prof_key_column_length(HashTable *profile);
