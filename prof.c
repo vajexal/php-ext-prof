@@ -47,7 +47,7 @@ PHP_RINIT_FUNCTION (prof) {
 #endif
 
     PROF_G(error) = false;
-    PROF_G(start_time) = get_time();
+    PROF_G(start_time) = get_wall_time();
     if (!PROF_G(start_time)) {
         return FAILURE;
     }
@@ -80,6 +80,9 @@ PHP_RSHUTDOWN_FUNCTION (prof) {
                         break;
                     case PROF_OUTPUT_MODE_CALLGRIND:
                         prof_sampling_print_result_callgrind();
+                        break;
+                    case PROF_OUTPUT_MODE_PPROF:
+                        prof_sampling_print_result_pprof();
                         break;
                 }
                 break;

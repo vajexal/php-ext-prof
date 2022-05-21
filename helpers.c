@@ -42,6 +42,16 @@ zend_ulong get_time() {
     return ts.tv_sec * 1000000 + ts.tv_nsec / 1000;
 }
 
+zend_ulong get_wall_time() {
+    struct timespec ts;
+
+    if (clock_gettime(CLOCK_REALTIME, &ts)) {
+        return 0;
+    }
+
+    return ts.tv_sec * 1000000000 + ts.tv_nsec;
+}
+
 prof_mode get_prof_mode() {
     if (strcmp(sapi_module.name, "cli") != 0) {
         return PROF_MODE_NONE;
@@ -73,6 +83,8 @@ prof_output_mode get_prof_output_mode() {
 
     if (strcmp(mode, "callgrind") == 0) {
         return PROF_OUTPUT_MODE_CALLGRIND;
+    } else if (strcmp(mode, "pprof") == 0) {
+        return PROF_OUTPUT_MODE_PPROF;
     }
 
     return PROF_OUTPUT_MODE_CONSOLE;
@@ -111,12 +123,12 @@ uint16_t get_prof_key_column_length(HashTable *profile) {
 }
 
 void prof_print_common_header() {
-    zend_ulong end_time = get_time();
+    zend_ulong end_time = get_wall_time();
     if (!end_time) {
         return;
     }
 
-    double total_time = (double)(end_time - PROF_G(start_time)) / 1000000;
+    double total_time = (double)(end_time - PROF_G(start_time)) / 1000000000;
 
     php_printf("total time: %.6fs\n\n", total_time);
 }

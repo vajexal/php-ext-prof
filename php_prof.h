@@ -15,12 +15,13 @@ typedef enum {
     PROF_MODE_NONE,
     PROF_MODE_SAMPLING,
     PROF_MODE_FUNC,
-    PROF_MODE_OPCODE,
+    PROF_MODE_OPCODE
 } prof_mode;
 
 typedef enum {
     PROF_OUTPUT_MODE_CONSOLE,
     PROF_OUTPUT_MODE_CALLGRIND,
+    PROF_OUTPUT_MODE_PPROF
 } prof_output_mode;
 
 # if defined(ZTS) && defined(COMPILE_DL_PROF)
@@ -37,7 +38,7 @@ ZEND_BEGIN_MODULE_GLOBALS(prof)
     uint8_t mode;
     uint8_t output_mode;
     bool error;
-    zend_ulong start_time;
+    zend_ulong start_time; // wall time in nanoseconds
 
     bool sampling_enabled;
     uint sampling_interval;

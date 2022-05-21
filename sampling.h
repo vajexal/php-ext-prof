@@ -14,5 +14,6 @@ zend_result prof_sampling_setup();
 zend_result prof_sampling_teardown();
 void prof_sampling_print_result_console();
 void prof_sampling_print_result_callgrind();
+void prof_sampling_print_result_pprof();
 
 #endif //PROF_SAMPLING_H

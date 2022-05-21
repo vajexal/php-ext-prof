@@ -8,7 +8,10 @@
 #define MAX_KEY_COLUMN_LENGTH 120
 
 prof_unit *get_prof_unit();
+// return microseconds
 zend_ulong get_time();
+// returns nanoseconds
+zend_ulong get_wall_time();
 prof_mode get_prof_mode();
 prof_output_mode get_prof_output_mode();
 zend_string *get_function_name(zend_function *func);
