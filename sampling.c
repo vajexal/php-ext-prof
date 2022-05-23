@@ -136,7 +136,8 @@ void prof_sampling_print_result_callgrind() {
 
     FILE *fp = fopen(filename_buf, "w");
     if (!fp) {
-        return; // todo error
+        PROF_G(error) = true;
+        return;
     }
 
     smart_string cmd = {0};
@@ -172,13 +173,13 @@ void prof_sampling_print_result_callgrind() {
 void prof_sampling_print_result_pprof() {
     zend_ulong end_time = get_wall_time();
     if (!end_time) {
-        zend_error(E_ERROR, "profile get end time error");
+        PROF_G(error) = true;
         return;
     }
 
     FILE *fp = fopen("cpu.pprof", "w");
     if (!fp) {
-        zend_error(E_ERROR, "open profile file error");
+        PROF_G(error) = true;
         return;
     }
 
@@ -301,20 +302,20 @@ void prof_sampling_print_result_pprof() {
                 Z_TYPE(gzdata) != IS_FALSE
             ) {
                 if (fwrite(Z_STRVAL(gzdata), Z_STRLEN(gzdata), 1, fp) < 1) {
-                    zend_error(E_ERROR, "write profile to file error");
+                    PROF_G(error) = true;
                 }
             } else {
-                zend_error(E_ERROR, "gzip profile error");
+                PROF_G(error) = true;
             }
 
             zval_ptr_dtor(&fn_name);
             zval_ptr_dtor(&gzdata);
             zval_ptr_dtor(&pbdata);
         } else {
-            zend_error(E_ERROR, "pack profile error");
+            PROF_G(error) = true;
         }
     } else {
-        zend_error(E_ERROR, "malloc profile buf error");
+        PROF_G(error) = true;
     }
 
     // free all

@@ -94,6 +94,10 @@ PHP_RSHUTDOWN_FUNCTION (prof) {
                 break;
             }
         }
+
+        if (PROF_G(error)) {
+            php_printf("There was error during profiling\n");
+        }
     }
 
     switch (PROF_G(mode)) {
