@@ -21,7 +21,7 @@
 
 ZEND_DECLARE_MODULE_GLOBALS(prof)
 
-PHP_MINIT_FUNCTION (prof) {
+PHP_MINIT_FUNCTION(prof) {
 #if defined(COMPILE_DL_MY_EXTENSION) && defined(ZTS)
     ZEND_TSRMLS_CACHE_UPDATE();
 #endif
@@ -41,7 +41,7 @@ PHP_MINIT_FUNCTION (prof) {
     return SUCCESS;
 }
 
-PHP_RINIT_FUNCTION (prof) {
+PHP_RINIT_FUNCTION(prof) {
 #if defined(ZTS) && defined(COMPILE_DL_PROF)
     ZEND_TSRMLS_CACHE_UPDATE();
 #endif
@@ -64,7 +64,7 @@ PHP_RINIT_FUNCTION (prof) {
     return SUCCESS;
 }
 
-PHP_RSHUTDOWN_FUNCTION (prof) {
+PHP_RSHUTDOWN_FUNCTION(prof) {
     if (PROF_G(error)) {
         php_printf("There was error during profiling\n");
     } else {
@@ -113,7 +113,7 @@ PHP_RSHUTDOWN_FUNCTION (prof) {
     return SUCCESS;
 }
 
-PHP_MINFO_FUNCTION (prof) {
+PHP_MINFO_FUNCTION(prof) {
     php_info_print_table_start();
     php_info_print_table_header(2, "prof support", "enabled");
     php_info_print_table_end();

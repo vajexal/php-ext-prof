@@ -206,9 +206,9 @@ void prof_sampling_print_result_pprof() {
     period_type.type = get_string_table_map_str_index(&string_table_map, "cpu", sizeof("cpu"));
     period_type.unit = get_string_table_map_str_index(&string_table_map, "nanoseconds", sizeof("nanoseconds"));
 
-    Perftools__Profiles__Sample **samples = emalloc(sizeof(Perftools__Profiles__Sample*) * sampling_units_count);
-    Perftools__Profiles__Location **locations = emalloc(sizeof(Perftools__Profiles__Location*) * sampling_units_count);
-    Perftools__Profiles__Function **functions = emalloc(sizeof(Perftools__Profiles__Function*) * sampling_units_count);
+    Perftools__Profiles__Sample **samples = emalloc(sizeof(Perftools__Profiles__Sample *) * sampling_units_count);
+    Perftools__Profiles__Location **locations = emalloc(sizeof(Perftools__Profiles__Location *) * sampling_units_count);
+    Perftools__Profiles__Function **functions = emalloc(sizeof(Perftools__Profiles__Function *) * sampling_units_count);
     size_t samples_i = 0;
     size_t functions_i = 0;
     size_t locations_i = 0;
@@ -226,7 +226,7 @@ void prof_sampling_print_result_pprof() {
         functions_i++;
 
         // create location
-        Perftools__Profiles__Line **lines = ecalloc(1, sizeof(Perftools__Profiles__Line*));
+        Perftools__Profiles__Line **lines = ecalloc(1, sizeof(Perftools__Profiles__Line *));
         lines[0] = emalloc(sizeof(Perftools__Profiles__Line));
         perftools__profiles__line__init(lines[0]);
         lines[0]->function_id = functions_i;
