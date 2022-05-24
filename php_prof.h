@@ -35,8 +35,8 @@ typedef struct {
 } prof_unit;
 
 ZEND_BEGIN_MODULE_GLOBALS(prof)
-    uint8_t mode;
-    uint8_t output_mode;
+    prof_mode mode;
+    prof_output_mode output_mode;
     bool error;
     zend_ulong start_time; // wall time in nanoseconds
 
