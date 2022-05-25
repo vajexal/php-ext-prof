@@ -80,7 +80,7 @@ static zend_observer_fcall_handlers prof_observer(zend_execute_data *execute_dat
 static void prof_observer_begin(zend_execute_data *execute_data) {
     prof_unit *unit = get_prof_unit();
     if (!unit) {
-        PROF_G(error) = true;
+        prof_add_warning("get prof unit");
         return;
     }
 
@@ -91,14 +91,14 @@ static void prof_observer_begin(zend_execute_data *execute_data) {
 static void prof_observer_end(zend_execute_data *execute_data, zval *retval) {
     prof_unit *end_unit = get_prof_unit();
     if (!end_unit) {
-        PROF_G(error) = true;
+        prof_add_warning("get prof unit");
         return;
     }
 
     zend_string *function_name = get_function_name(execute_data->func);
     if (!function_name) {
         efree(end_unit);
-        PROF_G(error) = true;
+        prof_add_warning("get function name");
         return;
     }
 
@@ -106,7 +106,7 @@ static void prof_observer_end(zend_execute_data *execute_data, zval *retval) {
     if (!unit) {
         efree(end_unit);
         zend_string_release(function_name);
-        PROF_G(error) = true;
+        prof_add_warning("get func start unit");
         return;
     }
     zend_stack_del_top(&PROF_G(func_start_units));

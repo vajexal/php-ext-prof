@@ -4,13 +4,13 @@
 # include "config.h"
 #endif
 
-#include "php.h"
-#include "ext/standard/info.h"
 #include "php_prof.h"
 #include "helpers.h"
 #include "sampling.h"
 #include "func.h"
 #include "opcode.h"
+
+#include "ext/standard/info.h"
 
 /* For compatibility with older PHP versions */
 #ifndef ZEND_PARSE_PARAMETERS_NONE
@@ -46,7 +46,7 @@ PHP_RINIT_FUNCTION(prof) {
     ZEND_TSRMLS_CACHE_UPDATE();
 #endif
 
-    PROF_G(error) = false;
+    prof_init_errors();
     PROF_G(start_time) = get_wall_time();
     if (!PROF_G(start_time)) {
         return FAILURE;
@@ -65,8 +65,8 @@ PHP_RINIT_FUNCTION(prof) {
 }
 
 PHP_RSHUTDOWN_FUNCTION(prof) {
-    if (PROF_G(error)) {
-        php_printf("There was error during profiling\n");
+    if (prof_has_errors()) {
+        prof_print_errors();
     } else {
         if (PROF_G(mode) != PROF_MODE_NONE && PROF_G(output_mode) == PROF_OUTPUT_MODE_CONSOLE) {
             prof_print_common_header();
@@ -95,10 +95,10 @@ PHP_RSHUTDOWN_FUNCTION(prof) {
             }
         }
 
-        if (PROF_G(error)) {
-            php_printf("There was error during profiling\n");
-        }
+        prof_print_errors();
     }
+
+    prof_shutdown_errors();
 
     switch (PROF_G(mode)) {
         case PROF_MODE_SAMPLING:

@@ -136,7 +136,7 @@ void prof_sampling_print_result_callgrind() {
 
     FILE *fp = fopen(filename_buf, "w");
     if (!fp) {
-        PROF_G(error) = true;
+        prof_add_error("open file");
         return;
     }
 
@@ -173,13 +173,13 @@ void prof_sampling_print_result_callgrind() {
 void prof_sampling_print_result_pprof() {
     zend_ulong end_time = get_wall_time();
     if (!end_time) {
-        PROF_G(error) = true;
+        prof_add_warning("get wall time");
         return;
     }
 
     FILE *fp = fopen("cpu.pprof", "w");
     if (!fp) {
-        PROF_G(error) = true;
+        prof_add_error("open file");
         return;
     }
 
@@ -302,20 +302,20 @@ void prof_sampling_print_result_pprof() {
                 Z_TYPE(gzdata) != IS_FALSE
             ) {
                 if (fwrite(Z_STRVAL(gzdata), Z_STRLEN(gzdata), 1, fp) < 1) {
-                    PROF_G(error) = true;
+                    prof_add_error("write to file");
                 }
             } else {
-                PROF_G(error) = true;
+                prof_add_error("compress profile");
             }
 
             zval_ptr_dtor(&fn_name);
             zval_ptr_dtor(&gzdata);
             zval_ptr_dtor(&pbdata);
         } else {
-            PROF_G(error) = true;
+            prof_add_error("pack profile");
         }
     } else {
-        PROF_G(error) = true;
+        prof_add_warning("malloc profile buf");
     }
 
     // free all
@@ -360,7 +360,7 @@ static void prof_sigprof_handler(int signo) {
 
     zend_string *function_name = get_function_name(execute_data->func);
     if (!function_name) {
-        PROF_G(error) = true;
+        prof_add_warning("get function name");
         return;
     }
 
@@ -384,7 +384,7 @@ static void *prof_ticker(void *args) {
     sigemptyset(&set);
     sigaddset(&set, SIGPROF);
     if (pthread_sigmask(SIG_BLOCK, &set, NULL)) {
-        PROF_G(error) = true;
+        prof_add_warning("block signal");
         return NULL;
     }
 

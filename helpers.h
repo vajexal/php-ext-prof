@@ -1,8 +1,8 @@
 #ifndef PROF_HELPERS_H
 #define PROF_HELPERS_H
 
-#include "php.h"
 #include "php_prof.h"
+#include "errors.h"
 
 #define MIN_KEY_COLUMN_LENGTH 20
 #define MAX_KEY_COLUMN_LENGTH 120

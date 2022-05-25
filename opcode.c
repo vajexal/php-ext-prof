@@ -79,7 +79,7 @@ static void prof_opcode_handler_count_timings(zend_execute_data *execute_data) {
         PROF_G(opcode_last_lineno) = lineno;
         PROF_G(opcode_last_time) = get_time();
         if (!PROF_G(opcode_last_time)) {
-            PROF_G(error) = true;
+            prof_add_warning("get time");
         }
         return;
     }
@@ -95,7 +95,7 @@ static void prof_opcode_handler_count_timings(zend_execute_data *execute_data) {
 
     zend_ulong end_time = get_time();
     if (!end_time) {
-        PROF_G(error) = true;
+        prof_add_warning("get time");
         return;
     }
 

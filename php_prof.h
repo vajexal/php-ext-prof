@@ -3,6 +3,8 @@
 #ifndef PHP_PROF_H
 # define PHP_PROF_H
 
+#include "php.h"
+
 #include <pthread.h>
 #include <stdatomic.h>
 
@@ -10,6 +12,10 @@ extern zend_module_entry prof_module_entry;
 # define phpext_prof_ptr &prof_module_entry
 
 # define PHP_PROF_VERSION "0.1.0"
+
+# if defined(ZTS) && defined(COMPILE_DL_PROF)
+ZEND_TSRMLS_CACHE_EXTERN()
+# endif
 
 typedef enum {
     PROF_MODE_NONE,
@@ -24,10 +30,6 @@ typedef enum {
     PROF_OUTPUT_MODE_PPROF
 } prof_output_mode;
 
-# if defined(ZTS) && defined(COMPILE_DL_PROF)
-ZEND_TSRMLS_CACHE_EXTERN()
-# endif
-
 typedef struct {
     zend_ulong wall;
     zend_ulong cpu;
@@ -37,7 +39,7 @@ typedef struct {
 ZEND_BEGIN_MODULE_GLOBALS(prof)
     prof_mode mode;
     prof_output_mode output_mode;
-    bool error;
+    zend_array errors;
     zend_ulong start_time; // wall time in nanoseconds
 
     bool sampling_enabled;
