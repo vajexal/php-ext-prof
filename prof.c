@@ -21,10 +21,17 @@
 
 ZEND_DECLARE_MODULE_GLOBALS(prof)
 
+PHP_INI_BEGIN()
+PHP_INI_ENTRY("prof.mode", "", PHP_INI_SYSTEM, NULL)
+PHP_INI_ENTRY("prof.output_mode", "", PHP_INI_SYSTEM, NULL)
+PHP_INI_END()
+
 PHP_MINIT_FUNCTION(prof) {
 #if defined(COMPILE_DL_MY_EXTENSION) && defined(ZTS)
     ZEND_TSRMLS_CACHE_UPDATE();
 #endif
+
+    REGISTER_INI_ENTRIES();
 
     PROF_G(mode) = get_prof_mode();
     PROF_G(output_mode) = get_prof_output_mode();
@@ -37,6 +44,12 @@ PHP_MINIT_FUNCTION(prof) {
         case PROF_MODE_OPCODE:
             return prof_opcode_init();
     }
+
+    return SUCCESS;
+}
+
+PHP_MSHUTDOWN_FUNCTION(prof) {
+    UNREGISTER_INI_ENTRIES();
 
     return SUCCESS;
 }
@@ -117,6 +130,8 @@ PHP_MINFO_FUNCTION(prof) {
     php_info_print_table_start();
     php_info_print_table_header(2, "prof support", "enabled");
     php_info_print_table_end();
+
+    DISPLAY_INI_ENTRIES();
 }
 
 static const zend_function_entry ext_functions[] = {
@@ -128,7 +143,7 @@ zend_module_entry prof_module_entry = {
     "prof",
     ext_functions,
     PHP_MINIT(prof),
-    NULL,
+    PHP_MSHUTDOWN(prof),
     PHP_RINIT(prof),
     PHP_RSHUTDOWN(prof),
     PHP_MINFO(prof),

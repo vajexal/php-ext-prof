@@ -53,11 +53,12 @@ zend_ulong get_wall_time() {
 }
 
 prof_mode get_prof_mode() {
-    if (strcmp(sapi_module.name, "cli") != 0) {
+    if (sapi_module.name && strcmp(sapi_module.name, "cli") != 0) {
         return PROF_MODE_NONE;
     }
 
-    const char *mode = getenv("PROF_MODE");
+    const char *ini_mode = INI_STR("prof.mode");
+    const char *mode = ini_mode && ini_mode[0] ? ini_mode : getenv("PROF_MODE");
 
     if (!mode) {
         return PROF_MODE_NONE;
@@ -75,7 +76,8 @@ prof_mode get_prof_mode() {
 }
 
 prof_output_mode get_prof_output_mode() {
-    const char *mode = getenv("PROF_OUTPUT_MODE");
+    const char *ini_mode = INI_STR("prof.output_mode");
+    const char *mode = ini_mode && ini_mode[0] ? ini_mode : getenv("PROF_OUTPUT_MODE");
 
     if (!mode) {
         return PROF_OUTPUT_MODE_CONSOLE;
