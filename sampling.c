@@ -12,8 +12,6 @@
 
 #define SAMPLING_HITS_DEFAULT_CAPACITY 4096
 #define SAMPLING_TICKS_THRESHOLD 10
-#define SAMPLES_LIMIT 20
-#define SAMPLING_THRESHOLD 1
 #define PPROF_SAMPLE_TYPES_COUNT 2
 
 ZEND_EXTERN_MODULE_GLOBALS(prof)
@@ -58,10 +56,9 @@ zend_result prof_sampling_setup() {
     zend_signal(SIGPROF, prof_sigprof_handler);
 
     srand(time(NULL));
-    PROF_G(sampling_interval) = 1000 + rand() % 500; // todo configurable
     struct itimerval timeout;
     timeout.it_value.tv_sec = timeout.it_interval.tv_sec = 0;
-    timeout.it_value.tv_usec = timeout.it_interval.tv_usec = PROF_G(sampling_interval);
+    timeout.it_value.tv_usec = timeout.it_interval.tv_usec = PROF_G(config).sampling_interval;
 
     if (setitimer(ITIMER_PROF, &timeout, NULL)) {
         return FAILURE;
@@ -115,10 +112,10 @@ void prof_sampling_print_result_console() {
     php_printf("%-*s hits\n", function_name_column_length, "function");
 
     zend_hash_sort(&PROF_G(sampling_units), prof_compare_sampling_units, 0);
-    HashTable *hits = ht_slice(&PROF_G(sampling_units), SAMPLES_LIMIT); // todo configurable
+    HashTable *hits = ht_slice(&PROF_G(sampling_units), PROF_G(config).sampling_limit);
 
     ZEND_HASH_FOREACH_STR_KEY_PTR(hits, function_name, sampling_unit) {
-        if (sampling_unit->hits <= SAMPLING_THRESHOLD) { // todo configurable
+        if (sampling_unit->hits <= PROF_G(config).sampling_threshold) {
             continue;
         }
 
@@ -156,7 +153,7 @@ void prof_sampling_print_result_callgrind() {
     zend_string *function_name;
     prof_sampling_unit *sampling_unit;
     ZEND_HASH_FOREACH_STR_KEY_PTR(&PROF_G(sampling_units), function_name, sampling_unit) {
-        if (sampling_unit->hits <= SAMPLING_THRESHOLD) { // todo configurable
+        if (sampling_unit->hits <= PROF_G(config).sampling_threshold) {
             continue;
         }
 
@@ -245,7 +242,7 @@ void prof_sampling_print_result_pprof() {
         sample_locations[0] = locations[locations_i - 1]->id;
         int64_t *sample_values = ecalloc(PPROF_SAMPLE_TYPES_COUNT, sizeof(int64_t));
         sample_values[0] = (int64_t)sampling_unit->hits;
-        sample_values[1] = (int64_t)(sampling_unit->hits * PROF_G(sampling_interval)) * 1000; // us to ns
+        sample_values[1] = (int64_t)(sampling_unit->hits * PROF_G(config).sampling_interval) * 1000; // us to ns
 
         samples[samples_i] = emalloc(sizeof(Perftools__Profiles__Sample));
         perftools__profiles__sample__init(samples[samples_i]);
@@ -285,7 +282,7 @@ void prof_sampling_print_result_pprof() {
     profile.time_nanos = PROF_G(start_time);
     profile.duration_nanos = (int64_t)(end_time - PROF_G(start_time));
     profile.period_type = &period_type;
-    profile.period = PROF_G(sampling_interval);
+    profile.period = PROF_G(config).sampling_interval;
 
     // pack protobuf profile
     size_t len = perftools__profiles__profile__get_packed_size(&profile);
@@ -391,12 +388,12 @@ static void *prof_ticker(void *args) {
     while (PROF_G(sampling_enabled)) {
         PROF_G(sampling_ticks)++;
 
-        if (PROF_G(sampling_ticks) > SAMPLING_TICKS_THRESHOLD) {
+        if (PROF_G(sampling_ticks) > SAMPLING_TICKS_THRESHOLD) { // todo clean cpu profile
             // probably sleeping
             prof_sigprof_handler(SIGPROF); // possible segfault
         }
 
-        usleep(PROF_G(sampling_interval));
+        usleep(PROF_G(config).sampling_interval);
     }
 
     return NULL;
@@ -411,7 +408,7 @@ static zend_always_inline int prof_compare_sampling_units(Bucket *f, Bucket *s) 
 
 static int prof_sampling_apply_threshold(zval *zv) {
     prof_sampling_unit *sampling_unit = Z_PTR_P(zv);
-    if (sampling_unit->hits <= SAMPLING_THRESHOLD) { // todo configurable
+    if (sampling_unit->hits <= PROF_G(config).sampling_threshold) {
         return ZEND_HASH_APPLY_REMOVE;
     }
 

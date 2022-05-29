@@ -4,6 +4,7 @@
 # define PHP_PROF_H
 
 #include "php.h"
+#include "prof_config.h"
 
 #include <pthread.h>
 #include <stdatomic.h>
@@ -17,19 +18,6 @@ extern zend_module_entry prof_module_entry;
 ZEND_TSRMLS_CACHE_EXTERN()
 # endif
 
-typedef enum {
-    PROF_MODE_NONE,
-    PROF_MODE_SAMPLING,
-    PROF_MODE_FUNC,
-    PROF_MODE_OPCODE
-} prof_mode;
-
-typedef enum {
-    PROF_OUTPUT_MODE_CONSOLE,
-    PROF_OUTPUT_MODE_CALLGRIND,
-    PROF_OUTPUT_MODE_PPROF
-} prof_output_mode;
-
 typedef struct {
     zend_ulong wall;
     zend_ulong cpu;
@@ -37,13 +25,11 @@ typedef struct {
 } prof_unit;
 
 ZEND_BEGIN_MODULE_GLOBALS(prof)
-    prof_mode mode;
-    prof_output_mode output_mode;
+    prof_config config;
     zend_array errors;
     zend_ulong start_time; // wall time in nanoseconds
 
     bool sampling_enabled;
-    uint sampling_interval;
     pthread_t sampling_thread;
     atomic_uint sampling_ticks;
     HashTable sampling_units;

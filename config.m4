@@ -11,5 +11,5 @@ if test "$PHP_PROF" != "no"; then
 
   AC_DEFINE(HAVE_PROF, 1, [ Have prof support ])
 
-  PHP_NEW_EXTENSION(prof, prof.c helpers.c sampling.c func.c opcode.c errors.c profile.pb-c.c, $ext_shared)
+  PHP_NEW_EXTENSION(prof, prof.c helpers.c sampling.c func.c opcode.c errors.c config.c profile.pb-c.c, $ext_shared)
 fi

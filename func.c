@@ -3,8 +3,6 @@
 #include "helpers.h"
 
 #define FUNC_UNITS_DEFAULT_CAPACITY 4096
-#define FUNC_UNITS_LIMIT 50
-#define FUNC_THRESHOLD 0.000001
 
 ZEND_EXTERN_MODULE_GLOBALS(prof)
 
@@ -44,12 +42,12 @@ void prof_func_print_result() {
     php_printf("%-*s wall        cpu         memory     calls\n", function_name_column_length, "function");
 
     zend_hash_sort(&PROF_G(func_units), prof_compare_func_units, 0);
-    HashTable *func_units = ht_slice(&PROF_G(func_units), FUNC_UNITS_LIMIT); // todo configurable
+    HashTable *func_units = ht_slice(&PROF_G(func_units), PROF_G(config).func_limit);
 
     prof_func_unit *func_unit;
     char memory_buf[80];
     ZEND_HASH_FOREACH_STR_KEY_PTR(func_units, function_name, func_unit) {
-        if (func_unit->wall_time <= FUNC_THRESHOLD) { // todo configurable
+        if (func_unit->wall_time <= PROF_G(config).func_threshold) {
             continue;
         }
 

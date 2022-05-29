@@ -24,6 +24,11 @@ ZEND_DECLARE_MODULE_GLOBALS(prof)
 PHP_INI_BEGIN()
 PHP_INI_ENTRY("prof.mode", "", PHP_INI_SYSTEM, NULL)
 PHP_INI_ENTRY("prof.output_mode", "", PHP_INI_SYSTEM, NULL)
+PHP_INI_ENTRY("prof.sampling_interval", "", PHP_INI_SYSTEM, NULL)
+PHP_INI_ENTRY("prof.sampling_limit", "", PHP_INI_SYSTEM, NULL)
+PHP_INI_ENTRY("prof.sampling_threshold", "", PHP_INI_SYSTEM, NULL)
+PHP_INI_ENTRY("prof.func_limit", "", PHP_INI_SYSTEM, NULL)
+PHP_INI_ENTRY("prof.func_threshold", "", PHP_INI_SYSTEM, NULL)
 PHP_INI_END()
 
 PHP_MINIT_FUNCTION(prof) {
@@ -33,10 +38,11 @@ PHP_MINIT_FUNCTION(prof) {
 
     REGISTER_INI_ENTRIES();
 
-    PROF_G(mode) = get_prof_mode();
-    PROF_G(output_mode) = get_prof_output_mode();
+    if (build_config() == FAILURE) {
+        return FAILURE;
+    }
 
-    switch (PROF_G(mode)) {
+    switch (PROF_G(config).mode) {
         case PROF_MODE_SAMPLING:
             return prof_sampling_init();
         case PROF_MODE_FUNC:
@@ -65,7 +71,7 @@ PHP_RINIT_FUNCTION(prof) {
         return FAILURE;
     }
 
-    switch (PROF_G(mode)) {
+    switch (PROF_G(config).mode) {
         case PROF_MODE_SAMPLING:
             return prof_sampling_setup();
         case PROF_MODE_FUNC:
@@ -81,13 +87,13 @@ PHP_RSHUTDOWN_FUNCTION(prof) {
     if (prof_has_errors()) {
         prof_print_errors();
     } else {
-        if (PROF_G(mode) != PROF_MODE_NONE && PROF_G(output_mode) == PROF_OUTPUT_MODE_CONSOLE) {
+        if (PROF_G(config).mode != PROF_MODE_NONE && PROF_G(config).output_mode == PROF_OUTPUT_MODE_CONSOLE) {
             prof_print_common_header();
         }
 
-        switch (PROF_G(mode)) {
+        switch (PROF_G(config).mode) {
             case PROF_MODE_SAMPLING:
-                switch (PROF_G(output_mode)) {
+                switch (PROF_G(config).output_mode) {
                     case PROF_OUTPUT_MODE_CONSOLE:
                         prof_sampling_print_result_console();
                         break;
@@ -113,7 +119,7 @@ PHP_RSHUTDOWN_FUNCTION(prof) {
 
     prof_shutdown_errors();
 
-    switch (PROF_G(mode)) {
+    switch (PROF_G(config).mode) {
         case PROF_MODE_SAMPLING:
             return prof_sampling_teardown();
         case PROF_MODE_FUNC:
