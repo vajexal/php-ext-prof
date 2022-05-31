@@ -18,19 +18,35 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Setup
         run: |
           apt update -yq
           apt install -yq golang libprotobuf-c-dev git zlib1g-dev valgrind
-          git clone https://github.com/bats-core/bats-core.git
-          cd bats-core
-          ./install.sh /usr/local
-          cd ..
+
+      - name: Cache bats-core
+        id: cache-bats-core
+        uses: actions/cache@v3
+        with:
+          key: bats-core-v2
+          path: |
+            /bats-core
+            /bats-support
+            /bats-assert
+            /bats-file
+
+      - if: ${{ steps.cache-bats-core.outputs.cache-hit == 'false' }}
+        name: Setup bats-core
+        run: |
+          git clone https://github.com/bats-core/bats-core.git /bats-core
           git clone https://github.com/bats-core/bats-support.git /bats-support
           git clone https://github.com/bats-core/bats-assert.git /bats-assert
           git clone https://github.com/bats-core/bats-file.git /bats-file
+
+      - name: Install bats-core
+        run: |
+          cd /bats-core && ./install.sh /usr/local && cd -
 
       - name: Build
         run: |
