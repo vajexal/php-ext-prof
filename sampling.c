@@ -3,8 +3,8 @@
 #include "helpers.h"
 #include "profile.pb-c.h"
 
-#include <php_main.h>
-#include <zend_smart_string.h>
+#include "php_main.h"
+#include "zend_smart_string.h"
 
 #include <time.h>
 #include <pthread.h>
@@ -128,10 +128,7 @@ void prof_sampling_print_result_console() {
 }
 
 void prof_sampling_print_result_callgrind() {
-    char filename_buf[80];
-    snprintf(filename_buf, sizeof(filename_buf), "callgrind.out.%d", getpid());
-
-    FILE *fp = fopen(filename_buf, "w");
+    FILE *fp = fopen("callgrind.out", "w");
     if (!fp) {
         prof_add_error("open file");
         return;
