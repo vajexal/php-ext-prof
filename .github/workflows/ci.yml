@@ -1,0 +1,45 @@
+name: Build
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        php: [ '8.1' ]
+
+    container: php:${{ matrix.php }}-cli
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Setup
+        run: |
+          apt update -yq
+          apt install -yq golang libprotobuf-c-dev git zlib1g-dev valgrind
+          git clone https://github.com/bats-core/bats-core.git
+          cd bats-core
+          ./install.sh /usr/local
+          cd ..
+          git clone https://github.com/bats-core/bats-support.git /bats-support
+          git clone https://github.com/bats-core/bats-assert.git /bats-assert
+          git clone https://github.com/bats-core/bats-file.git /bats-file
+
+      - name: Build
+        run: |
+          phpize
+          ./configure
+          make && make install
+
+      - name: Run tests
+        run: make test TESTS="-q --show-diff"
+
+      - name: Run functional tests
+        run: bats tests
