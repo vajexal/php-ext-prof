@@ -6,9 +6,6 @@
 #include "php.h"
 #include "prof_config.h"
 
-#include <pthread.h>
-#include <stdatomic.h>
-
 extern zend_module_entry prof_module_entry;
 # define phpext_prof_ptr &prof_module_entry
 
@@ -30,8 +27,6 @@ ZEND_BEGIN_MODULE_GLOBALS(prof)
     zend_ulong start_time; // wall time in nanoseconds
 
     bool sampling_enabled;
-    pthread_t sampling_thread;
-    atomic_uint sampling_ticks;
     HashTable sampling_units;
 
     zend_stack func_start_units;

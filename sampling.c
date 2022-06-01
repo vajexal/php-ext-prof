@@ -6,12 +6,9 @@
 #include "php_main.h"
 #include "zend_smart_string.h"
 
-#include <time.h>
-#include <pthread.h>
 #include <signal.h>
 
 #define SAMPLING_HITS_DEFAULT_CAPACITY 4096
-#define SAMPLING_TICKS_THRESHOLD 10
 #define PPROF_SAMPLE_TYPES_COUNT 2
 
 ZEND_EXTERN_MODULE_GLOBALS(prof)
@@ -40,7 +37,6 @@ static int64_t get_string_table_map_str_index(pprof_string_table_map *string_tab
 }
 
 static void prof_sigprof_handler(int signo);
-static void *prof_ticker(void *args);
 static zend_always_inline int prof_compare_sampling_units(Bucket *f, Bucket *s);
 static int prof_sampling_apply_threshold(zval *zv);
 
@@ -51,20 +47,14 @@ zend_result prof_sampling_init() {
 zend_result prof_sampling_setup() {
     PROF_G(sampling_enabled) = true;
     zend_hash_init(&PROF_G(sampling_units), SAMPLING_HITS_DEFAULT_CAPACITY, NULL, NULL, 0);
-    PROF_G(sampling_ticks) = ATOMIC_VAR_INIT(0);
 
     zend_signal(SIGPROF, prof_sigprof_handler);
 
-    srand(time(NULL));
     struct itimerval timeout;
     timeout.it_value.tv_sec = timeout.it_interval.tv_sec = 0;
     timeout.it_value.tv_usec = timeout.it_interval.tv_usec = PROF_G(config).sampling_interval;
 
     if (setitimer(ITIMER_PROF, &timeout, NULL)) {
-        return FAILURE;
-    }
-
-    if (pthread_create(&PROF_G(sampling_thread), NULL, prof_ticker, NULL)) {
         return FAILURE;
     }
 
@@ -78,10 +68,6 @@ zend_result prof_sampling_teardown() {
     no_timeout.it_value.tv_sec = no_timeout.it_value.tv_usec = no_timeout.it_interval.tv_sec = no_timeout.it_interval.tv_usec = 0;
 
     if (setitimer(ITIMER_PROF, &no_timeout, NULL)) {
-        return FAILURE;
-    }
-
-    if (pthread_join(PROF_G(sampling_thread), NULL)) {
         return FAILURE;
     }
 
@@ -339,9 +325,6 @@ static void prof_sigprof_handler(int signo) {
         return;
     }
 
-    uint ticks = atomic_exchange(&PROF_G(sampling_ticks), 0);
-    ticks = MAX(1, ticks);
-
     zend_execute_data *execute_data = EG(current_execute_data);
 
     while (execute_data && (!execute_data->func || !ZEND_USER_CODE(execute_data->func->type))) {
@@ -367,33 +350,9 @@ static void prof_sigprof_handler(int signo) {
         zend_hash_add_new_ptr(&PROF_G(sampling_units), function_name, sampling_unit);
     }
 
-    sampling_unit->hits += ticks;
+    sampling_unit->hits += 1;
 
     zend_string_release(function_name);
-}
-
-static void *prof_ticker(void *args) {
-    // block SIGPROF in this thread
-    sigset_t set;
-    sigemptyset(&set);
-    sigaddset(&set, SIGPROF);
-    if (pthread_sigmask(SIG_BLOCK, &set, NULL)) {
-        prof_add_warning("block signal");
-        return NULL;
-    }
-
-    while (PROF_G(sampling_enabled)) {
-        PROF_G(sampling_ticks)++;
-
-        if (PROF_G(sampling_ticks) > SAMPLING_TICKS_THRESHOLD) { // todo clean cpu profile
-            // probably sleeping
-            prof_sigprof_handler(SIGPROF); // possible segfault
-        }
-
-        usleep(PROF_G(config).sampling_interval);
-    }
-
-    return NULL;
 }
 
 static zend_always_inline int prof_compare_sampling_units(Bucket *f, Bucket *s) {
