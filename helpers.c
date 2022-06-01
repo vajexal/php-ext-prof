@@ -171,3 +171,14 @@ void get_memory_with_units(zend_long memory, char *buf, size_t buf_len) {
         snprintf(buf, buf_len, "%.2f mb", (float)memory / 1024 / 1024);
     }
 }
+
+#if PHP_VERSION_ID < 80100
+zval* ZEND_FASTCALL zend_hash_lookup(HashTable *ht, zend_string *key) {
+    zval *zv = zend_hash_find(ht, key);
+    if (zv) {
+        return zv;
+    }
+
+    return zend_hash_add_empty_element(ht, key);
+}
+#endif

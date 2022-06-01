@@ -21,4 +21,8 @@ void prof_print_common_header();
 HashTable *ht_slice(HashTable *ht, zend_ulong limit);
 void get_memory_with_units(zend_long memory, char *buf, size_t buf_len);
 
+#if PHP_VERSION_ID < 80100
+zval* ZEND_FASTCALL zend_hash_lookup(HashTable *ht, zend_string *key);
+#endif
+
 #endif //PROF_HELPERS_H
