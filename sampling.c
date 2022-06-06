@@ -2,6 +2,7 @@
 #include "php_prof.h"
 #include "helpers.h"
 #include "profile.pb-c.h"
+#include "gzencode.h"
 
 #include "php_main.h"
 #include "zend_smart_string.h"
@@ -273,24 +274,15 @@ void prof_sampling_print_result_pprof() {
     if (buf) {
         if (perftools__profiles__profile__pack(&profile, buf) == len) {
             // compress protobuf profile
-            zval fn_name, gzdata, pbdata;
-            ZVAL_STRING(&fn_name, "gzencode");
-            ZVAL_STRINGL(&pbdata, buf, len);
-            zval *params = {&pbdata};
-            if (
-                call_user_function(CG(function_table), NULL, &fn_name, &gzdata, 1, params) == SUCCESS &&
-                Z_TYPE(gzdata) != IS_FALSE
-            ) {
-                if (fwrite(Z_STRVAL(gzdata), Z_STRLEN(gzdata), 1, fp) < 1) {
+            zend_string *gzprofile = gzencode(buf, len);
+            if (gzprofile) {
+                if (fwrite(ZSTR_VAL(gzprofile), ZSTR_LEN(gzprofile), 1, fp) < 1) {
                     prof_add_error("write to file");
                 }
+                zend_string_release(gzprofile);
             } else {
                 prof_add_error("compress profile");
             }
-
-            zval_ptr_dtor(&fn_name);
-            zval_ptr_dtor(&gzdata);
-            zval_ptr_dtor(&pbdata);
         } else {
             prof_add_error("pack profile");
         }
