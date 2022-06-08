@@ -17,13 +17,15 @@ jobs:
     container: php:${{ matrix.php }}-cli
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
       - name: Setup
         run: |
           apt update -yq
-          apt install -yq golang libprotobuf-c-dev git zlib1g-dev valgrind
+          apt install -yq git valgrind zlib1g-dev golang
+
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          submodules: true
 
       - name: Cache bats-core
         id: cache-bats-core

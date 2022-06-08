@@ -115,7 +115,6 @@ line                      time
 ### Requirements
 
 - zlib
-- libprotobuf-c
 
 ### Installation
 
