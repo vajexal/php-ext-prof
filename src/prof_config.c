@@ -117,5 +117,16 @@ zend_result build_config() {
         PROF_G(config).func_threshold = (double)func_threshold_us / 1000000;
     }
 
+    PROF_G(config).opcode_threshold = 0;
+    zend_string *opcode_threshold = get_config_var("prof.opcode_threshold", "PROF_OPCODE_THRESHOLD");
+    if (opcode_threshold) {
+        zend_ulong opcode_threshold_us;
+        if (!parse_uint(opcode_threshold, &opcode_threshold_us)) {
+            zend_error(E_WARNING, "invalid prof opcode threshold");
+            return FAILURE;
+        }
+        PROF_G(config).opcode_threshold = (double)opcode_threshold_us / 1000000;
+    }
+
     return SUCCESS;
 }

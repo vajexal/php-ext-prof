@@ -29,6 +29,7 @@ PHP_INI_ENTRY("prof.sampling_limit", "", PHP_INI_SYSTEM, NULL)
 PHP_INI_ENTRY("prof.sampling_threshold", "", PHP_INI_SYSTEM, NULL)
 PHP_INI_ENTRY("prof.func_limit", "", PHP_INI_SYSTEM, NULL)
 PHP_INI_ENTRY("prof.func_threshold", "", PHP_INI_SYSTEM, NULL)
+PHP_INI_ENTRY("prof.opcode_threshold", "", PHP_INI_SYSTEM, NULL)
 PHP_INI_END()
 
 PHP_MINIT_FUNCTION(prof) {

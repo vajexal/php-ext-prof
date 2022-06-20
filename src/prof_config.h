@@ -24,6 +24,7 @@ typedef struct {
     zend_ulong sampling_threshold;
     zend_ulong func_limit;
     double func_threshold;
+    double opcode_threshold;
 } prof_config;
 
 zend_result build_config();

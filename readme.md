@@ -108,6 +108,10 @@ line                      time
 /app/t.php:8              0.000009s
 ```
 
+##### Additional params
+
+- opcode threshold (`prof.opcode_threshold` ini setting or `PROF_OPCODE_THRESHOLD` env var, default value is 0 microsecond), show only opcodes with time > n
+
 ### Limitations
 
 - for now profiler works only in cli mode

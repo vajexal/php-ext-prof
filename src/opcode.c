@@ -38,8 +38,7 @@ zend_result prof_opcode_teardown() {
 
 void prof_opcode_print_result() {
     zend_string *filename;
-    zval *func_timings;
-    zval *timing;
+    zval *func_timings, *timing;
     uint16_t line_column_length = get_prof_key_column_length(&PROF_G(opcode_timings));
     char line_name[1024];
 
@@ -57,7 +56,10 @@ void prof_opcode_print_result() {
             if (!timing || ZVAL_IS_NULL(timing) || Z_DVAL_P(timing) == PROF_OPCODE_EMPTY_TIMING) {
                 continue;
             }
-            sprintf(line_name, "%s:%d", ZSTR_VAL(filename), line);
+            if (Z_DVAL_P(timing) <= PROF_G(config).opcode_threshold) {
+                continue;
+            }
+            snprintf(line_name, sizeof(line_name), "%s:%d", ZSTR_VAL(filename), line);
             php_printf("%-*s %.6fs\n", line_column_length, line_name, Z_DVAL_P(timing));
             line_name[0] = '\0';
         }
