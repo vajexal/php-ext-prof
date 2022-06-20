@@ -31,15 +31,15 @@ jobs:
         id: cache-bats-core
         uses: actions/cache@v3
         with:
-          key: bats-core-v2
+          key: bats-core
           path: |
             /bats-core
             /bats-support
             /bats-assert
             /bats-file
 
-      - if: ${{ steps.cache-bats-core.outputs.cache-hit == 'false' }}
-        name: Setup bats-core
+      - name: Setup bats-core
+        if: steps.cache-bats-core.outputs.cache-hit != 'true'
         run: |
           git clone https://github.com/bats-core/bats-core.git /bats-core
           git clone https://github.com/bats-core/bats-support.git /bats-support
