@@ -86,11 +86,6 @@ static void prof_opcode_handler_count_timings(zend_execute_data *execute_data) {
         return;
     }
 
-    zval *file_timings = zend_hash_lookup(&PROF_G(opcode_timings), filename);
-    if (ZVAL_IS_NULL(file_timings)) {
-        array_init_size(file_timings, OPCODE_LINES_DEFAULT_CAPACITY);
-    }
-
     if (filename == PROF_G(opcode_last_file) && lineno == PROF_G(opcode_last_lineno)) {
         return;
     }
@@ -99,6 +94,11 @@ static void prof_opcode_handler_count_timings(zend_execute_data *execute_data) {
     if (!end_time) {
         prof_add_warning("get time");
         return;
+    }
+
+    zval *file_timings = zend_hash_lookup(&PROF_G(opcode_timings), filename);
+    if (ZVAL_IS_NULL(file_timings)) {
+        array_init_size(file_timings, OPCODE_LINES_DEFAULT_CAPACITY);
     }
 
     zval opline_time;
