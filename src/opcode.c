@@ -2,6 +2,8 @@
 #include "php_prof.h"
 #include "helpers.h"
 
+#include "fort.h"
+
 #define OPCODE_TIMINGS_DEFAULT_CAPACITY 1024
 #define OPCODE_LINES_DEFAULT_CAPACITY 128
 
@@ -39,15 +41,13 @@ zend_result prof_opcode_teardown() {
 void prof_opcode_print_result() {
     zend_string *filename;
     zval *func_timings, *timing;
-    uint16_t line_column_length = get_prof_key_column_length(&PROF_G(opcode_timings));
-    char line_name[1024];
 
-    // for line num after filename in column...
-    if (line_column_length + 5 <= MAX_KEY_COLUMN_LENGTH) {
-        line_column_length += 5;
-    }
+    ft_set_memory_funcs(local_malloc, local_free);
+    ft_table_t *table = ft_create_table();
+    ft_set_cell_prop(table, 0, FT_ANY_COLUMN, FT_CPROP_ROW_TYPE, FT_ROW_HEADER);
+    ft_set_border_style(table, FT_SOLID_ROUND_STYLE);
 
-    php_printf("%-*s time\n", line_column_length, "line");
+    ft_write_ln(table, "opcode", "time");
 
     ZEND_HASH_FOREACH_STR_KEY_VAL(&PROF_G(opcode_timings), filename, func_timings) {
         uint32_t max_line = zend_hash_next_free_element(Z_ARR_P(func_timings));
@@ -59,11 +59,14 @@ void prof_opcode_print_result() {
             if (Z_DVAL_P(timing) <= PROF_G(config).opcode_threshold) {
                 continue;
             }
-            snprintf(line_name, sizeof(line_name), "%s:%d", ZSTR_VAL(filename), line);
-            php_printf("%-*s %.6fs\n", line_column_length, line_name, Z_DVAL_P(timing));
-            line_name[0] = '\0';
+
+            ft_printf_ln(table, "%s:%d|%.6fs", ZSTR_VAL(filename), line, Z_DVAL_P(timing));
         }
     } ZEND_HASH_FOREACH_END();
+
+    php_printf("%s\n", ft_to_string(table));
+
+    ft_destroy_table(table);
 }
 
 static int prof_opcode_handler(zend_execute_data *execute_data) {

@@ -17,4 +17,6 @@ foo();
 --EXPECTF--
 total time: %fs
 
-function %w wall %w cpu %w memory %w calls
+╭──────────┬──────┬─────┬────────┬───────╮
+│ function │ wall │ cpu │ memory │ calls │
+╰──────────┴──────┴─────┴────────┴───────╯

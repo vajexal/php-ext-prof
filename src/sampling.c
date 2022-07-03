@@ -6,6 +6,7 @@
 
 #include "php_main.h"
 #include "zend_smart_string.h"
+#include "fort.h"
 
 #include <signal.h>
 
@@ -85,7 +86,6 @@ zend_result prof_sampling_teardown() {
 void prof_sampling_print_result_console() {
     zend_string *function_name;
     prof_sampling_unit *sampling_unit;
-    uint16_t function_name_column_length = get_prof_key_column_length(&PROF_G(sampling_units));
     zend_ulong total_samples = 0;
 
     ZEND_HASH_FOREACH_PTR(&PROF_G(sampling_units), sampling_unit) {
@@ -96,7 +96,13 @@ void prof_sampling_print_result_console() {
     if (total_samples == 0) {
         return;
     }
-    php_printf("%-*s hits\n", function_name_column_length, "function");
+
+    ft_set_memory_funcs(local_malloc, local_free);
+    ft_table_t *table = ft_create_table();
+    ft_set_cell_prop(table, 0, FT_ANY_COLUMN, FT_CPROP_ROW_TYPE, FT_ROW_HEADER);
+    ft_set_border_style(table, FT_SOLID_ROUND_STYLE);
+
+    ft_write_ln(table, "function", "hits");
 
     zend_hash_sort(&PROF_G(sampling_units), prof_compare_sampling_units, 0);
     HashTable *hits = ht_slice(&PROF_G(sampling_units), PROF_G(config).sampling_limit);
@@ -106,10 +112,12 @@ void prof_sampling_print_result_console() {
             continue;
         }
 
-        php_printf("%-*s %ld (%d%%)\n", function_name_column_length, ZSTR_VAL(function_name), sampling_unit->hits,
-                   (int)((float)sampling_unit->hits / total_samples * 100));
+        ft_printf_ln(table, "%s|%ld (%d%%)", ZSTR_VAL(function_name), sampling_unit->hits, (int)((float)sampling_unit->hits / total_samples * 100));
     } ZEND_HASH_FOREACH_END();
 
+    php_printf("%s\n", ft_to_string(table));
+
+    ft_destroy_table(table);
     zend_hash_destroy(hits);
     efree(hits);
 }

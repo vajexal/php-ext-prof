@@ -111,19 +111,6 @@ zend_always_inline int prof_compare_reverse_numeric_unstable_i(Bucket *f, Bucket
     return -numeric_compare_function(&f->val, &s->val);
 }
 
-uint16_t get_prof_key_column_length(HashTable *profile) {
-    zend_string *key;
-    uint16_t max_function_name_length = 0;
-
-    ZEND_HASH_FOREACH_STR_KEY(profile, key) {
-        if (ZSTR_LEN(key) > max_function_name_length) {
-            max_function_name_length = ZSTR_LEN(key);
-        }
-    } ZEND_HASH_FOREACH_END();
-
-    return MAX(MIN_KEY_COLUMN_LENGTH, MIN(max_function_name_length, MAX_KEY_COLUMN_LENGTH));
-}
-
 void prof_print_common_header() {
     zend_ulong end_time = get_wall_time();
     if (!end_time) {
@@ -170,6 +157,14 @@ void get_memory_with_units(zend_long memory, char *buf, size_t buf_len) {
     } else {
         snprintf(buf, buf_len, "%.2f mb", (float)memory / 1024 / 1024);
     }
+}
+
+void *local_malloc(size_t size) {
+    return emalloc(size);
+}
+
+void local_free(void *ptr) {
+    efree(ptr);
 }
 
 #if PHP_VERSION_ID < 80100

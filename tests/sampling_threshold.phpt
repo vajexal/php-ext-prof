@@ -19,4 +19,6 @@ foo();
 total time: %fs
 
 total samples: %i
-function %w hits
+╭──────────┬──────╮
+│ function │ hits │
+╰──────────┴──────╯

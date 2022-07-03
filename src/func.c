@@ -2,6 +2,8 @@
 #include "php_prof.h"
 #include "helpers.h"
 
+#include "fort.h"
+
 #define FUNC_UNITS_DEFAULT_CAPACITY 4096
 
 ZEND_EXTERN_MODULE_GLOBALS(prof)
@@ -37,9 +39,13 @@ zend_result prof_func_teardown() {
 
 void prof_func_print_result() {
     zend_string *function_name;
-    uint16_t function_name_column_length = get_prof_key_column_length(&PROF_G(func_units));
 
-    php_printf("%-*s wall        cpu         memory     calls\n", function_name_column_length, "function");
+    ft_set_memory_funcs(local_malloc, local_free);
+    ft_table_t *table = ft_create_table();
+    ft_set_cell_prop(table, 0, FT_ANY_COLUMN, FT_CPROP_ROW_TYPE, FT_ROW_HEADER);
+    ft_set_border_style(table, FT_SOLID_ROUND_STYLE);
+
+    ft_write_ln(table, "function", "wall", "cpu", "memory", "calls");
 
     zend_hash_sort(&PROF_G(func_units), prof_compare_func_units, 0);
     HashTable *func_units = ht_slice(&PROF_G(func_units), PROF_G(config).func_limit);
@@ -53,11 +59,13 @@ void prof_func_print_result() {
 
         memset(memory_buf, 0, sizeof(memory_buf));
         get_memory_with_units(func_unit->memory, memory_buf, sizeof(memory_buf));
-        php_printf("%-*s %.6fs   %.6fs   %-10s %d\n",
-                   function_name_column_length, ZSTR_VAL(function_name), func_unit->wall_time, func_unit->cpu_time, memory_buf, func_unit->calls
-        );
+
+        ft_printf_ln(table, "%s|%.6fs|%.6fs|%s|%d", ZSTR_VAL(function_name), func_unit->wall_time, func_unit->cpu_time, memory_buf, func_unit->calls);
     } ZEND_HASH_FOREACH_END();
 
+    php_printf("%s\n", ft_to_string(table));
+
+    ft_destroy_table(table);
     zend_hash_destroy(func_units);
     efree(func_units);
 }

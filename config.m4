@@ -24,13 +24,19 @@ if test "$PHP_PROF" != "no"; then
     protobuf-c/protobuf-c/protobuf-c.c
   "
 
+  FORT_SOURCES="
+    libfort/lib/fort.c
+  "
+
   AC_DEFINE(HAVE_PROF, 1, [ Have prof support ])
 
-  PHP_NEW_EXTENSION(prof, $PROF_SOURCES $PROTOBUF_C_SOURCES, $ext_shared)
+  PHP_NEW_EXTENSION(prof, $PROF_SOURCES $PROTOBUF_C_SOURCES $FORT_SOURCES, $ext_shared)
   PHP_SUBST(PROF_SHARED_LIBADD)
 
   PHP_ADD_INCLUDE($ext_srcdir/src)
   PHP_ADD_INCLUDE($ext_srcdir/protobuf-c)
+  PHP_ADD_INCLUDE($ext_srcdir/libfort/lib)
   PHP_ADD_BUILD_DIR($ext_builddir/src)
   PHP_ADD_BUILD_DIR($ext_builddir/protobuf-c)
+  PHP_ADD_BUILD_DIR($ext_builddir/libfort/lib)
 fi

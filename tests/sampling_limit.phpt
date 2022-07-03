@@ -26,5 +26,8 @@ bar();
 total time: %fs
 
 total samples: %i
-function %w hits
-foo %w %i (%i%)
+╭───%S───╮
+│ function │ hits%w │
+├──────────┼───%S───┤
+│ foo      │ %i (%i%) │
+╰───%S───╯

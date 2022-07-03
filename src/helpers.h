@@ -16,10 +16,11 @@ prof_mode get_prof_mode();
 prof_output_mode get_prof_output_mode();
 zend_string *get_function_name(zend_function *func);
 int prof_compare_reverse_numeric_unstable_i(Bucket *f, Bucket *s);
-uint16_t get_prof_key_column_length(HashTable *profile);
 void prof_print_common_header();
 HashTable *ht_slice(HashTable *ht, zend_ulong limit);
 void get_memory_with_units(zend_long memory, char *buf, size_t buf_len);
+void *local_malloc(size_t size);
+void local_free(void *ptr);
 
 #if PHP_VERSION_ID < 80100
 zval* ZEND_FASTCALL zend_hash_lookup(HashTable *ht, zend_string *key);

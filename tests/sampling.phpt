@@ -18,5 +18,8 @@ foo();
 total time: %fs
 
 total samples: %i
-function %w hits
-foo %w %i (100%)
+╭───%S───╮
+│ function │ hits%w │
+├──────────┼───%S───┤
+│ foo      │ %i (100%) │
+╰───%S───╯

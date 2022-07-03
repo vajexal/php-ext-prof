@@ -16,7 +16,10 @@ foo();
 --EXPECTF--
 total time: %fs
 
-line %w time
-%s:4 %w %fs
-%s:5 %w %fs
-%s:7 %w %fs
+╭───%S───╮
+│ opcode%w │ time      │
+├───%S───┼───────────┤
+│ %s:4 │ %fs │
+│ %s:5 │ %fs │
+│ %s:7 │ %fs │
+╰───%S───╯

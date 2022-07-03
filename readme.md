@@ -30,11 +30,14 @@ php -d prof.mode=sampling a.php
 output
 
 ```
-total time: 0.069855s
+total time: 0.076188s
 
-total samples: 69
-function             hits
-foo                  69 (100%)
+total samples: 70
+╭──────────┬───────────╮
+│ function │ hits      │
+├──────────┼───────────┤
+│ foo      │ 70 (100%) │
+╰──────────┴───────────╯
 ```
 
 ##### Output modes:
@@ -70,10 +73,13 @@ php -d prof.mode=func a.php
 output
 
 ```
-total time: 0.002412s
+total time: 0.002287s
 
-function             wall        cpu         memory     calls
-foo                  0.001083s   0.000034s   448 b      1
+╭──────────┬───────────┬───────────┬────────┬───────╮
+│ function │ wall      │ cpu       │ memory │ calls │
+├──────────┼───────────┼───────────┼────────┼───────┤
+│ foo      │ 0.001129s │ 0.000043s │ 448 b  │ 1     │
+╰──────────┴───────────┴───────────┴────────┴───────╯
 ```
 
 ##### Additional params
@@ -100,12 +106,15 @@ php -d prof.mode=opcode a.php
 output
 
 ```
-total time: 0.002116s
+total time: 0.002542s
 
-line                      time
-/app/t.php:5              0.001105s
-/app/t.php:6              0.000015s
-/app/t.php:8              0.000009s
+╭──────────────┬───────────╮
+│ opcode       │ time      │
+├──────────────┼───────────┤
+│ /app/t.php:4 │ 0.001115s │
+│ /app/t.php:5 │ 0.000009s │
+│ /app/t.php:7 │ 0.000003s │
+╰──────────────┴───────────╯
 ```
 
 ##### Additional params
