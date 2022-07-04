@@ -25,9 +25,9 @@ bar();
 --EXPECTF--
 total time: %fs
 
-total samples: %i
+total samples: %d
 ╭───%S───╮
 │ function │ hits%w │
 ├──────────┼───%S───┤
-│ foo      │ %i (%i%) │
+│ foo      │ %d (%d%) │
 ╰───%S───╯

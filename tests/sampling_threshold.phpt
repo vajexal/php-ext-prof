@@ -18,7 +18,7 @@ foo();
 --EXPECTF--
 total time: %fs
 
-total samples: %i
+total samples: %d
 ╭──────────┬──────╮
 │ function │ hits │
 ╰──────────┴──────╯
