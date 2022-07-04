@@ -4,7 +4,7 @@ Opcode threshold
 prof
 --INI--
 prof.mode=opcode
-prof.opcode_threshold=1000000
+prof.opcode_threshold=1
 --FILE--
 <?php
 function foo()

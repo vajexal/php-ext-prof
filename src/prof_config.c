@@ -18,6 +18,19 @@ static bool parse_uint(zend_string *value, zend_ulong *res) {
     return true;
 }
 
+static bool parse_double(zend_string *value, double *res) {
+    char *end;
+    double double_val = zend_strtod(ZSTR_VAL(value), (const char **)&end);
+    if (end != ZSTR_VAL(value) + ZSTR_LEN(value)) {
+        return false;
+    }
+    if (double_val < 0) {
+        return false;
+    }
+    *res = double_val;
+    return true;
+}
+
 static zend_string *get_config_var(const char *ini_name, const char *env_name) {
     zend_string *ini_name_str = zend_string_init(ini_name, strlen(ini_name), 0);
     zend_string *ini_value = zend_ini_get_value(ini_name_str);
@@ -109,23 +122,19 @@ zend_result build_config() {
     PROF_G(config).func_threshold = 0.000001;
     zend_string *func_threshold = get_config_var("prof.func_threshold", "PROF_FUNC_THRESHOLD");
     if (func_threshold) {
-        zend_ulong func_threshold_us;
-        if (!parse_uint(func_threshold, &func_threshold_us)) {
+        if (!parse_double(func_threshold, &PROF_G(config).func_threshold)) {
             zend_error(E_WARNING, "invalid prof func threshold");
             return FAILURE;
         }
-        PROF_G(config).func_threshold = (double)func_threshold_us / 1000000;
     }
 
     PROF_G(config).opcode_threshold = 0;
     zend_string *opcode_threshold = get_config_var("prof.opcode_threshold", "PROF_OPCODE_THRESHOLD");
     if (opcode_threshold) {
-        zend_ulong opcode_threshold_us;
-        if (!parse_uint(opcode_threshold, &opcode_threshold_us)) {
+        if (!parse_double(opcode_threshold, &PROF_G(config).opcode_threshold)) {
             zend_error(E_WARNING, "invalid prof opcode threshold");
             return FAILURE;
         }
-        PROF_G(config).opcode_threshold = (double)opcode_threshold_us / 1000000;
     }
 
     return SUCCESS;

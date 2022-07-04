@@ -4,7 +4,7 @@ Func threshold
 prof
 --INI--
 prof.mode=func
-prof.func_threshold=1000000
+prof.func_threshold=1
 --FILE--
 <?php
 function foo()

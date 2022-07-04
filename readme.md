@@ -85,7 +85,7 @@ total time: 0.002287s
 ##### Additional params
 
 - func limit (`prof.func_limit` ini setting or `PROF_FUNC_LIMIT` env var, default value is 50), show only top n functions by wall time
-- func threshold (`prof.func_threshold` ini setting or `PROF_FUNC_THRESHOLD` env var, default value is 1 microsecond), show only functions with wall time > n
+- func threshold (`prof.func_threshold` ini setting or `PROF_FUNC_THRESHOLD` env var, default value is 0.000001 seconds), show only functions with wall time > n
 
 #### Opcode
 
@@ -119,7 +119,7 @@ total time: 0.002542s
 
 ##### Additional params
 
-- opcode threshold (`prof.opcode_threshold` ini setting or `PROF_OPCODE_THRESHOLD` env var, default value is 0 microsecond), show only opcodes with time > n
+- opcode threshold (`prof.opcode_threshold` ini setting or `PROF_OPCODE_THRESHOLD` env var, default value is 0), show only opcodes with time > n
 
 ### Limitations
 
